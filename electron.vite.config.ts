@@ -26,6 +26,10 @@ export default defineConfig({
   renderer: {
     ...baseConfig,
     root: '.',
+    define:{
+      ...baseConfig.define,
+      __APP_PLATFORM__: JSON.stringify('electron')
+    },
     build: {
       rollupOptions: {
         input: {

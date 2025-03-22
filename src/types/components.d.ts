@@ -8,8 +8,17 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Footer: typeof import('./../components/Footer.vue')['default']
     HelloWorld: typeof import('./../components/HelloWorld.vue')['default']
+    Login: typeof import('./../components/Login.vue')['default']
+    Nav: typeof import('./../components/nav/Nav.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
+    SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
+    Splash: typeof import('./../components/Splash.vue')['default']
     SvgIcon: typeof import('./../components/SvgIcon.vue')['default']
+    SwitchLanguageBtn: typeof import('./../components/button/SwitchLanguageBtn.vue')['default']
+    SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
     Versions: typeof import('./../components/Versions.vue')['default']
   }
 }

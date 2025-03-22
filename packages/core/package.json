@@ -1,0 +1,26 @@
+{
+  "name": "@d-chat/core",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup --format esm --dts",
+    "watch": "tsc --watch",
+    "dev": "tsup --format esm --dts --watch",
+    "build:docs": "cd docs && pnpm run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.6.4",
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
+  }
+}

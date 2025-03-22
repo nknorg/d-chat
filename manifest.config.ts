@@ -12,7 +12,7 @@ const [major, minor, patch, label = "0"] = version
 
 export default {
   author: {
-    email: "mubaidr@gmail.com",
+    email: "peng.liu@nkn.org",
   },
   name: env.mode === "staging" ? `[INTERNAL] ${name}` : displayName || name,
   description,
@@ -21,10 +21,9 @@ export default {
   // semver is OK in "version_name"
   version_name: version,
   manifest_version: 3,
-  // key: '',
-  // action: {
-  //   default_popup: "src/ui/action-popup/index.html",
-  // },
+  action: {
+    default_popup: "web-extension/src/ui/action-popup/index.html",
+  },
   // background: {
   //   service_worker: "src/background/index.ts",
   //   type: "module",
@@ -36,9 +35,9 @@ export default {
   //     matches: ["*://*/*"],
   //   },
   // ],
-  // side_panel: {
-  //   default_path: "src/ui/side-panel/index.html",
-  // },
+  side_panel: {
+    default_path: "index.html",
+  },
   // devtools_page: "src/devtools/index.html",
   // options_page: "src/ui/options-page/index.html",
   offline_enabled: true,
@@ -54,10 +53,10 @@ export default {
   //     matches: ["<all_urls>"],
   //   },
   // ],
-  // icons: {
-  //   16: "src/assets/logo.png",
-  //   24: "src/assets/logo.png",
-  //   32: "src/assets/logo.png",
-  //   128: "src/assets/logo.png",
-  // },
+  icons: {
+    16: "assets/d-chat/logo.png",
+    24: "assets/d-chat/logo.png",
+    32: "assets/d-chat/logo.png",
+    128: "assets/d-chat/logo.png",
+  },
 } as ManifestV3Export

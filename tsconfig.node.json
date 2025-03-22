@@ -20,7 +20,9 @@
     "noEmit": true,
     "baseUrl": "./",
     "types": [
+      "vue-i18n",
       "electron-vite/node",
+      "@intlify/unplugin-vue-i18n/messages",
       "chrome-types"
     ]
   }

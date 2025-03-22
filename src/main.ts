@@ -6,18 +6,18 @@
 
 // Plugins
 import { registerPlugins } from '@/plugins'
-import SvgIcon from "./components/SvgIcon.vue";
-import 'virtual:svg-icons-register'
-
-// Components
-import App from './App.vue'
 
 // Composables
 import { createApp } from 'vue'
 
+// Components
+import App from './App.vue'
+import SvgIcon from './components/SvgIcon.vue'
+import 'virtual:svg-icons-register'
+
 const app = createApp(App)
 
 registerPlugins(app)
-// app.use(pinia)
+
 app.component('svg-icon', SvgIcon)
 app.mount('#app')

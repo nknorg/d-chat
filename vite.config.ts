@@ -4,17 +4,39 @@ import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 import Fonts from 'unplugin-fonts/vite'
 import Components from 'unplugin-vue-components/vite'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 
 // Utilities
 import { defineConfig } from 'vite'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import vuetify from 'vite-plugin-vuetify'
 
+const IS_DEV = process.env.NODE_ENV === 'development'
+const PORT = Number(process.env.PORT) || 3303
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: IS_DEV ? `/` : '',
+
+  build: {
+    watch: IS_DEV ? {} : undefined,
+    sourcemap: IS_DEV ? 'inline' : false
+
+  },
+  legacy: {
+    // ⚠️ SECURITY RISK: Allows WebSockets to connect to the vite server without a token check ⚠️
+    // See https://github.com/crxjs/chrome-extension-tools/issues/971 for more info
+    // The linked issue gives a potential fix that @crxjs/vite-plugin could implement
+    skipWebSocketTokenCheck: true
+  },
   plugins: [
     Components({
       dts: 'src/types/components.d.ts'
+    }),
+    VueI18nPlugin({
+      include: 'src/locales/**',
+      globalSFCScope: true,
+      compositionOnly: true
     }),
     vue(),
     vuetify({
@@ -24,12 +46,12 @@ export default defineConfig({
       }
     }),
     Fonts({
-      google: {
-        families: [{
-          name: 'Roboto',
-          styles: 'wght@100;300;400;500;700;900'
-        }]
-      }
+      // google: {
+      //   families: [{
+      //     name: 'Roboto',
+      //     styles: 'wght@100;300;400;500;700;900'
+      //   }]
+      // }
     }),
     createSvgIconsPlugin({
       // Specify the icon folder to be cached
@@ -38,10 +60,15 @@ export default defineConfig({
       symbolId: 'icon-[dir]-[name]'
     })
   ],
-  define: { 'process.env': {} },
+  define: {
+    'process.env': {
+      __APP_PLATFORM__: JSON.stringify('web')
+    }
+  },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@assets': resolve(__dirname, 'assets')
     },
     extensions: [
       '.js',
@@ -58,6 +85,21 @@ export default defineConfig({
       sass: {
         api: 'modern-compiler'
       }
+    }
+  },
+  server: {
+    port: PORT,
+    hmr: {
+      host: 'localhost'
+    },
+    origin: `http://localhost:${PORT}`,
+    cors: {
+      origin: [
+        // ⚠️ SECURITY RISK: Allows any chrome-extension to access the vite server ⚠️
+        // See https://github.com/crxjs/chrome-extension-tools/issues/971 for more info
+        // I don't believe that the linked issue mentions a potential solution
+        /chrome-extension:\/\//
+      ]
     }
   }
 })

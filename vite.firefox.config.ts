@@ -88,6 +88,10 @@ export default defineConfig(() => {
     build: {
       outDir: browserOutDir,
     },
+    define:{
+      ...baseConfig.define,
+      __APP_PLATFORM__: JSON.stringify('webext')
+    },
     plugins: browserPlugins,
   }
 
