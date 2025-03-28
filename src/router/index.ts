@@ -1,3 +1,4 @@
+import { useClientStore } from '@/stores/client'
 import contact from './contact'
 import chat from './chat'
 import setting from './setting'
@@ -12,7 +13,12 @@ const routes = [
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "home" */ '@/views/Home.vue')
+    component: () => import(/* webpackChunkName: "home" */ '@/views/chat/Home.vue')
+  },
+  {
+    path: '/signin',
+    name: 'Signin',
+    component: () => import( '@/views/Signin.vue')
   },
   {
     path: '/',
@@ -36,6 +42,18 @@ const routes = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+router.beforeEach(async (to, from, next) => {
+  const clientStore = useClientStore()
+  const isLogin = clientStore.lastSignInId != null
+  // const needLogin = to.meta.requiresAuth
+
+  if (!isLogin && to.path !== '/signin') {
+    next({ path: '/signin' })
+  } else {
+    next()
+  }
 })
 
 export default router

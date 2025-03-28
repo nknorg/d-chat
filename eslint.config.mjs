@@ -18,7 +18,10 @@ export default tseslint.config(
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
       'vue/require-default-prop': 'off',
-      'vue/multi-word-component-names': 'off'
+      'vue/multi-word-component-names': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off'
     }
   },
   eslintConfigPrettier

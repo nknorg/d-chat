@@ -28,7 +28,9 @@ export default defineConfig({
     root: '.',
     define:{
       ...baseConfig.define,
-      __APP_PLATFORM__: JSON.stringify('electron')
+      'process.env': {
+        __APP_PLATFORM__: 'electron'
+      }
     },
     build: {
       rollupOptions: {

@@ -1,3 +1,10 @@
 html {
-  width: 600px;
+  width: 800px;
+  height: 600px;
+}
+
+html.v-overlay-scroll-blocked {
+  position: relative !important;
+  width: 800px !important;
+  height: 600px !important;
 }

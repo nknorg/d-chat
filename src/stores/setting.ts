@@ -1,21 +1,20 @@
-import { application } from '@/common/application'
+import { localStorage } from '@d-chat/core'
 import { defineStore } from 'pinia'
 
 const STORE_NAME = 'settings'
 
-
 export const useSettingStore = defineStore('setting', {
-  state: () => {
+  state: (): { locale: string | null } => {
     return {
       locale: null
     }
   },
   actions: {
     async get(key: string) {
-      return await application.localStorage.get(`${STORE_NAME}:${key}`)
+      return await localStorage.get(`${STORE_NAME}:${key}`)
     },
     async set(key: string, val: string) {
-      return await application.localStorage.set(`${STORE_NAME}:${key}`, val)
+      return await localStorage.set(`${STORE_NAME}:${key}`, val)
     },
     async getLocale() {
       const locale = await this.get('locale')
@@ -30,12 +29,6 @@ export const useSettingStore = defineStore('setting', {
     },
     async setTheme(val: string) {
       return this.set('theme', val)
-    },
-    async getDefaultWallet() {
-      return await this.get('wallet')
-    },
-    async setDefaultWallet(val: string) {
-      return this.set('wallet', val)
     }
   }
 })

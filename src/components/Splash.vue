@@ -1,24 +1,16 @@
 <template>
   <v-app>
-    <v-container class="fill-height">
-      <v-row align="center" justify="center">
-        <v-col class="d-flex justify-center align-center">
-          <v-img
-            contain
-            width="322"
-            max-width="322"
-            :src="Logo"
-          />
-        </v-col>
-        <v-col class="d-flex justify-center align-center">
-          <v-progress-circular
-            :size="70"
-            :width="7"
-            color="primary"
-            indeterminate
-          ></v-progress-circular>
-        </v-col>
-      </v-row>
+    <v-container class="fill-height d-flex flex-column">
+      <v-layout class="d-flex flex-column align-center justify-center">
+        <v-img contain width="322" max-width="322" max-height="180" :src="Logo" />
+
+        <v-progress-circular
+          :size="70"
+          :width="7"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+      </v-layout>
     </v-container>
   </v-app>
 </template>

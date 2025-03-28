@@ -4,11 +4,7 @@
       <v-container fluid class="justify-center align-center">
         <v-app-bar>
           <router-link to="/">
-            <v-img
-              height="40"
-              width="140"
-              :src="Logo"
-            ></v-img>
+            <v-img height="40" width="140" :src="Logo"></v-img>
           </router-link>
 
           <v-spacer></v-spacer>
@@ -21,14 +17,20 @@
       </v-container>
     </v-main>
   </v-app>
+  <ConfirmDialog />
+  <Notivue v-slot="item">
+    <Notification
+      :item="item"
+      :theme="theme.global.name.value == 'dark' ? darkTheme : lightTheme"
+    />
+  </Notivue>
 </template>
 
 <script lang="ts" setup>
 import SettingsBtn from '@/components/button/SettingsBtn.vue'
 import Logo from '@assets/splash/logo.png'
-import { ComponentPublicInstance, getCurrentInstance } from 'vue'
+import { Notivue, Notification, darkTheme, lightTheme } from 'notivue'
+import { useTheme } from 'vuetify'
 
-const ins = getCurrentInstance()
-const proxy: ComponentPublicInstance = ins!.proxy!
-
+const theme = useTheme()
 </script>

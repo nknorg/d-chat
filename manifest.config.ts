@@ -1,20 +1,20 @@
-import { env } from "node:process"
-import type { ManifestV3Export } from "@crxjs/vite-plugin"
-import packageJson from "./package.json" with { type: "json" }
+import { env } from 'node:process'
+import type { ManifestV3Export } from '@crxjs/vite-plugin'
+import packageJson from './package.json' with { type: 'json' }
 
 const { version, name, description, displayName } = packageJson
 // Convert from Semver (example: 0.1.0-beta6)
-const [major, minor, patch, label = "0"] = version
+const [major, minor, patch, label = '0'] = version
   // can only contain digits, dots, or dash
-  .replace(/[^\d.-]+/g, "")
+  .replace(/[^\d.-]+/g, '')
   // split into version parts
   .split(/[.-]/)
 
 export default {
   author: {
-    email: "peng.liu@nkn.org",
+    email: 'peng.liu@nkn.org'
   },
-  name: env.mode === "staging" ? `[INTERNAL] ${name}` : displayName || name,
+  name: env.mode === 'staging' ? `[INTERNAL] ${name}` : displayName || name,
   description,
   // up to four numbers separated by dots
   version: `${major}.${minor}.${patch}.${label}`,
@@ -22,12 +22,12 @@ export default {
   version_name: version,
   manifest_version: 3,
   action: {
-    default_popup: "web-extension/src/ui/action-popup/index.html",
+    default_popup: 'web-extension/src/ui/action-popup/index.html'
   },
-  // background: {
-  //   service_worker: "src/background/index.ts",
-  //   type: "module",
-  // },
+  background: {
+    service_worker: 'web-extension/src/background/index.ts',
+    type: 'module'
+  },
   // content_scripts: [
   //   {
   //     all_frames: false,
@@ -35,14 +35,17 @@ export default {
   //     matches: ["*://*/*"],
   //   },
   // ],
+  content_security_policy: {
+    extension_pages: "script-src 'wasm-unsafe-eval';"
+  },
   side_panel: {
-    default_path: "index.html",
+    default_path: 'index.html'
   },
   // devtools_page: "src/devtools/index.html",
   // options_page: "src/ui/options-page/index.html",
   offline_enabled: true,
-  host_permissions: ["<all_urls>"],
-  permissions: ["storage", "tabs", "background", "sidePanel"],
+  host_permissions: ['<all_urls>'],
+  permissions: ['storage', 'tabs', 'background', 'sidePanel', 'notifications'],
   // web_accessible_resources: [
   //   {
   //     resources: [
@@ -54,9 +57,9 @@ export default {
   //   },
   // ],
   icons: {
-    16: "assets/d-chat/logo.png",
-    24: "assets/d-chat/logo.png",
-    32: "assets/d-chat/logo.png",
-    128: "assets/d-chat/logo.png",
-  },
+    16: 'assets/d-chat/logo.png',
+    24: 'assets/d-chat/logo.png',
+    32: 'assets/d-chat/logo.png',
+    128: 'assets/d-chat/logo.png'
+  }
 } as ManifestV3Export

@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import 'vue-i18n'
+import { Router } from 'vue-router'
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -10,5 +11,8 @@ declare module 'vue' {
     $tm: I18n['tm']
     $rt: I18n['rt']
     $i18n: I18n
+    $router: Router
   }
 }
+
+

@@ -10,7 +10,7 @@ export default defineManifest((env) => ({
     },
   },
   background: {
-    scripts: ["src/background/index.ts"],
+    scripts: ["web-extension/src/background/index.ts"],
     type: "module",
     persistent: false,
   },

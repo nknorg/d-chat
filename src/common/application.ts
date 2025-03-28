@@ -1,43 +1,75 @@
-// import { useWalletStore } from '../stores/wallet'
-import { ILocalStorage } from '@d-chat/core'
-import { useTheme } from 'vuetify'
-import { LocalStorage } from './localStorage'
-import { ChromeStorageSync } from '../../web-extension/src/chromeStorageSync'
+import { IService, Service } from '@/common/service'
+import { i18n } from '@/plugins/i18n'
+import { useClientStore } from '@/stores/client'
+import { useWalletStore } from "@/stores/wallet";
 import { LightTheme } from '@/theme/light'
 import { SkinTheme } from '@/theme/theme'
+import { LocalStorage, StoreAdapter } from '@d-chat/core'
+import { ref } from 'vue'
 
 export class Application {
-
-  public loading: boolean = false
+  public loading = ref(false)
   public theme: SkinTheme = new LightTheme()
-  public localStorage: ILocalStorage
-
-  constructor() {
-    if (process.env.__APP_PLATFORM__ == 'electron') {
-      this.localStorage = new LocalStorage()
-    } else if (process.env.__APP_PLATFORM__ == 'webext') {
-      this.localStorage = new ChromeStorageSync()
-    } else {
-      this.localStorage = new LocalStorage()
-    }
-  }
+  public service: IService = new Service()
 
   async initialize(): Promise<void> {
-    this.loading = true
+    this.loading.value = true
 
-    // const walletStore = useWalletStore()
-    // await walletStore.getAll()
+    if (process.env.__APP_PLATFORM__ == 'electron') {
+      this.service = new Service()
+    } else if (process.env.__APP_PLATFORM__ == 'webext') {
+      const module = await import('../../web-extension/src/chromeStorage')
+      StoreAdapter.setLocalStorage(new module.ChromeStorage('sync'))
+      StoreAdapter.setRpcServerCache(new module.ChromeStorage('local'))
+      const module2 = await import('../../web-extension/src/service')
+      this.service = new module2.Service()
+    } else {
+      StoreAdapter.setRpcServerCache(new LocalStorage())
+      this.service = new Service()
+    }
 
-    this.loading = false
+    // upgrade
+    if (process.env.__APP_PLATFORM__ == 'electron') {
+      // upgrade
+    } else if (process.env.__APP_PLATFORM__ == 'webext') {
+      // upgrade
+    } else {
+      // upgrade
+    }
+
+    // init i18n
+    const locale = await StoreAdapter.localStorage.get('settings:locale')
+    // @ts-ignore
+    const browserLanguages = navigator.languages || [navigator.language || navigator.userLanguage]
+    let browserLocale = 'en'
+    for (const lang of browserLanguages) {
+      if (i18n.global.availableLocales.includes(lang)) {
+        browserLocale = lang
+        break
+      }
+    }
+    // @ts-ignore
+    i18n.global.locale.value = locale ?? browserLocale
+
+    const clientStore = useClientStore()
+    await clientStore.getLastSignInId()
+
+    // auto sign in
+    const walletStore = useWalletStore()
+    const password = await walletStore.getPassword()
+    if (password !== undefined) {
+      const wallet = await walletStore.getDefault()
+      const { seed } = await walletStore.restoreNknWallet(wallet.keystore, password)
+      if (seed !== undefined) {
+        await clientStore.connect(seed)
+      }
+    }
+
+    this.loading.value = false
     return
-  }
-
-  switchTheme(t: string) {
-    const theme = useTheme()
-    theme.global.name.value = t
   }
 }
 
-
 const application = new Application()
+
 export { application }

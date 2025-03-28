@@ -8,12 +8,17 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
     Footer: typeof import('./../components/Footer.vue')['default']
     HelloWorld: typeof import('./../components/HelloWorld.vue')['default']
+    ImportKeystoreDialog: typeof import('./../components/dialog/ImportKeystoreDialog.vue')['default']
+    ImportSeedDialog: typeof import('./../components/dialog/ImportSeedDialog.vue')['default']
     Login: typeof import('./../components/Login.vue')['default']
+    MyAvatar: typeof import('./../components/contact/MyAvatar.vue')['default']
     Nav: typeof import('./../components/nav/Nav.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SelectAccount: typeof import('./../components/wallet/SelectAccount.vue')['default']
     SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
     Splash: typeof import('./../components/Splash.vue')['default']
     SvgIcon: typeof import('./../components/SvgIcon.vue')['default']
