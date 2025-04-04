@@ -1,22 +1,23 @@
-import { Connect } from '@d-chat/core'
+import { Connect, Db } from '@d-chat/core'
 
 export enum ServiceType {
-  Connect = 'Connect'
+  Connect = 'Connect',
+  Db = 'Db',
+  dchat = 'dchat'
 }
 
 export interface IService {
   call: (service: string, method: string, ...args: any[]) => any
-  on: (service: string, method: string, ...args: any[]) => any
+}
+
+export const services: Record<ServiceType, any> = {
+  [ServiceType.Connect]: Connect,
+  [ServiceType.Db]: Db,
+  [ServiceType.dchat]: null
 }
 
 export class Service implements IService {
-  services: Record<ServiceType, any> = {
-    [ServiceType.Connect]: Connect
-  }
-
   call(service: string, method: string, ...args: any[]): any {
-    return this.services[service][method](...args)
+    return services[service][method](...args)
   }
-
-  on(service: string, method: string, ...args: any[]): any {}
 }

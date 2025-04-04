@@ -13,6 +13,8 @@
   "login": "登錄",
   "login_warning": "警告：每個帳號都有對應的密碼，遺失密碼或帳號檔案將無法找回。",
   "auto_sign_in": "自動登錄",
+  "sign_out": "登出",
+  "sign_out_confirm": "確定登出",
   "ok": "確定",
   "delete": "刪除",
   "cancel": "取消",

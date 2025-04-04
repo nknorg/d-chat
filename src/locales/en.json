@@ -13,6 +13,8 @@
   "login": "LOG IN",
   "login_warning": "Warning: Each account has a corresponding password. If you lose your password or account file, you cannot recover it.",
   "auto_sign_in": "Auto Sign In",
+  "sign_out": "Sign Out",
+  "sign_out_confirm": "Confirm Sign Out",
   "ok": "OK",
   "delete": "Delete",
   "cancel": "Cancel",

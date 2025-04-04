@@ -1,7 +1,8 @@
 import { IService, Service } from '@/common/service'
 import { i18n } from '@/plugins/i18n'
 import { useClientStore } from '@/stores/client'
-import { useWalletStore } from "@/stores/wallet";
+import { useCommonStore } from '@/stores/common'
+import { useWalletStore } from '@/stores/wallet'
 import { LightTheme } from '@/theme/light'
 import { SkinTheme } from '@/theme/theme'
 import { LocalStorage, StoreAdapter } from '@d-chat/core'
@@ -14,16 +15,18 @@ export class Application {
 
   async initialize(): Promise<void> {
     this.loading.value = true
-
     if (process.env.__APP_PLATFORM__ == 'electron') {
       this.service = new Service()
     } else if (process.env.__APP_PLATFORM__ == 'webext') {
+      import('../../web-extension/src/connectEventListener')
+      import('../../web-extension/src/dchatEventListener')
       const module = await import('../../web-extension/src/chromeStorage')
       StoreAdapter.setLocalStorage(new module.ChromeStorage('sync'))
       StoreAdapter.setRpcServerCache(new module.ChromeStorage('local'))
       const module2 = await import('../../web-extension/src/service')
       this.service = new module2.Service()
     } else {
+      import('./connectEvent')
       StoreAdapter.setRpcServerCache(new LocalStorage())
       this.service = new Service()
     }
@@ -36,6 +39,9 @@ export class Application {
     } else {
       // upgrade
     }
+
+    const commonStore = useCommonStore()
+    await commonStore.getDeviceId()
 
     // init i18n
     const locale = await StoreAdapter.localStorage.get('settings:locale')
@@ -53,6 +59,7 @@ export class Application {
 
     const clientStore = useClientStore()
     await clientStore.getLastSignInId()
+    await clientStore.getLastSignInStatus()
 
     // auto sign in
     const walletStore = useWalletStore()

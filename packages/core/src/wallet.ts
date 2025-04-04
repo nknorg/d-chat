@@ -1,6 +1,6 @@
 import { Wallet, WalletJson } from 'nkn-sdk'
 import { ILocalStorage } from './ILocalStorage'
-import { StoreAdapter } from './store/storeAdapter.ts'
+import { StoreAdapter } from './store/storeAdapter'
 import { getDefaultName } from './utils/format'
 
 export interface WalletRecord {
@@ -27,8 +27,11 @@ export class WalletHelper {
     return await this.storage.set(`${WALLET_KEY}:default`, address)
   }
 
-  async getDefaultWallet(): Promise<WalletRecord> {
+  async getDefaultWallet(): Promise<WalletRecord | null> {
     const addr: string = await this.storage.get(`${WALLET_KEY}:default`)
+    if (!addr) {
+      return null
+    }
     return await this.getWalletByAddress(addr)
   }
 
@@ -38,6 +41,10 @@ export class WalletHelper {
 
   async getPassword(): Promise<string | undefined> {
     return await this.storage.get(`${WALLET_KEY}:password`)
+  }
+
+  async removePassword(): Promise<void> {
+    await this.storage.remove(`${WALLET_KEY}:password`)
   }
 
   async addWallet(wallet: WalletRecord) {

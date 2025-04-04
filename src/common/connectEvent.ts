@@ -1,0 +1,24 @@
+import { addDchatEvents } from '@/common/dchatEvent'
+import { services, ServiceType } from '@/common/service'
+import { useClientStore } from '@/stores/client'
+import { ConnectEvent, ConnectionStatus, Dchat } from '@d-chat/core'
+
+const clientStore = useClientStore()
+ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
+  services[ServiceType.dchat] = new Dchat()
+  addDchatEvents(services[ServiceType.dchat])
+  clientStore.connectStatus = ConnectionStatus.Connected
+}
+
+ConnectEvent.onMessage = (_id: string, ...args: any[]) => {
+  const [message] = args
+  services[ServiceType.dchat].handleMessage(message)
+}
+
+ConnectEvent.onConnectFailed = (_id: string, ...args: any[]) => {
+  clientStore.connectStatus = ConnectionStatus.Disconnected
+}
+
+ConnectEvent.onDisconnect = (_id: string, ...args: any[]) => {
+  clientStore.connectStatus = ConnectionStatus.Disconnected
+}

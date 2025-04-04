@@ -38,6 +38,9 @@ export const useWalletStore = defineStore(STORE_NAME, {
     async getPassword() {
       return await walletHelper.getPassword()
     },
+    async removePassword() {
+      return await walletHelper.removePassword()
+    },
     async creatNknWallet(options: { password?: string; seed?: string }): Promise<WalletRecord> {
       const wallet = await walletHelper.createNknWallet(options)
       if ('seed' in wallet) {

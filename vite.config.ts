@@ -12,7 +12,7 @@ import { defineConfig } from 'vite'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import vuetify from 'vite-plugin-vuetify'
 
-import packageJson from "./package.json" with { type: "json" }
+import packageJson from './package.json' with { type: 'json' }
 
 const IS_DEV = process.env.NODE_ENV === 'development'
 const PORT = Number(process.env.PORT) || 3303
@@ -22,7 +22,7 @@ export default defineConfig({
   base: IS_DEV ? `/` : '',
   build: {
     watch: IS_DEV ? {} : undefined,
-    sourcemap: IS_DEV ? 'inline' : false,
+    sourcemap: IS_DEV ? 'inline' : false
   },
 
   legacy: {
@@ -33,7 +33,7 @@ export default defineConfig({
   },
   plugins: [
     nodePolyfills({
-      include: ['buffer'],
+      include: ['buffer', 'crypto'],
       protocolImports: true
     }),
     Components({
@@ -69,7 +69,7 @@ export default defineConfig({
   define: {
     'process.env': {
       __APP_PLATFORM__: 'web',
-      __VERSION__: packageJson.version,
+      __VERSION__: packageJson.version
     }
   },
   resolve: {
@@ -78,15 +78,7 @@ export default defineConfig({
       '@assets': resolve(__dirname, 'assets')
     },
 
-    extensions: [
-      '.js',
-      '.json',
-      '.jsx',
-      '.mjs',
-      '.ts',
-      '.tsx',
-      '.vue'
-    ]
+    extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue']
   },
   css: {
     preprocessorOptions: {

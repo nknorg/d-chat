@@ -8,22 +8,30 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ChatContainer: typeof import('./../components/chat/ChatContainer.vue')['default']
     ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
     Footer: typeof import('./../components/Footer.vue')['default']
     HelloWorld: typeof import('./../components/HelloWorld.vue')['default']
+    ImageMessage: typeof import('./../components/chat/contentType/ImageMessage.vue')['default']
     ImportKeystoreDialog: typeof import('./../components/dialog/ImportKeystoreDialog.vue')['default']
     ImportSeedDialog: typeof import('./../components/dialog/ImportSeedDialog.vue')['default']
     Login: typeof import('./../components/Login.vue')['default']
+    MessageContent: typeof import('./../components/chat/MessageContent.vue')['default']
+    MessageItem: typeof import('./../components/chat/MessageItem.vue')['default']
     MyAvatar: typeof import('./../components/contact/MyAvatar.vue')['default']
     Nav: typeof import('./../components/nav/Nav.vue')['default']
+    NewWhisper: typeof import('./../components/dialog/NewWhisper.vue')['default']
+    NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectAccount: typeof import('./../components/wallet/SelectAccount.vue')['default']
     SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
+    SideBar: typeof import('./../components/nav/SideBar.vue')['default']
     Splash: typeof import('./../components/Splash.vue')['default']
     SvgIcon: typeof import('./../components/SvgIcon.vue')['default']
     SwitchLanguageBtn: typeof import('./../components/button/SwitchLanguageBtn.vue')['default']
     SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
+    TextMessage: typeof import('./../components/chat/contentType/TextMessage.vue')['default']
     Versions: typeof import('./../components/Versions.vue')['default']
   }
 }

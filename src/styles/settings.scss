@@ -8,3 +8,23 @@
 // @use 'vuetify/settings' with (
 //   $color-pack: false
 // );
+
+.splitpanes {
+  .splitpanes__pane {
+    overflow: auto;
+    background-color: transparent !important;
+  }
+
+  .splitpanes__splitter {
+
+  }
+
+}
+
+.splitpanes--vertical > .splitpanes__splitter {
+  border-radius: 5px;
+}
+
+.splitpanes--horizontal > .splitpanes__splitter {
+  border-radius: 5px;
+}

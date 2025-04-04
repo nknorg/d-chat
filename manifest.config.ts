@@ -36,7 +36,7 @@ export default {
   //   },
   // ],
   content_security_policy: {
-    extension_pages: "script-src 'wasm-unsafe-eval';"
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   side_panel: {
     default_path: 'index.html'
