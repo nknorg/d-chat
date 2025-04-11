@@ -1,7 +1,7 @@
 import log, { LogLevelDesc } from 'loglevel'
 
 if (process.env.NODE_ENV === 'production') {
-  log.setDefaultLevel('info')
+  log.setDefaultLevel('debug')
 } else {
   log.setDefaultLevel('trace')
 }

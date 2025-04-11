@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer theme="dark" rail permanent>
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-chat-plus" value="newWhisper">
+      <v-list-item prepend-icon="mdi-chat-plus" @click="null">
         <NewWhisperDialog />
       </v-list-item>
       <v-list-item prepend-icon="mdi-forum-plus"></v-list-item>

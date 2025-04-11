@@ -1,25 +1,26 @@
 import { application } from '@/common/application'
 import { ServiceType } from '@/common/service'
+import { SessionType } from '@d-chat/core'
 import { defineStore } from 'pinia'
-import { Dchat } from '@d-chat/core'
 
 const STORE_NAME = 'chat'
 export const useChatStore = defineStore(STORE_NAME, {
-  state: (): { dchat: Dchat; targetId?: string } => {
+  state: (): { currentTargetId?: string; currentTargetType?: SessionType } => {
     return {
-      targetId: undefined
+      currentTargetId: undefined,
+      currentTargetType: undefined
     }
   },
   actions: {
-    async newDchat() {
-
-    },
     async getCurrentChatTargetId() {
-      // this.targetId = await window.ipc.invoke(CHANNEL, INSTANCE, 'getCurrentChatTargetId')
+      this.currentTargetId = await application.service.call(
+        ServiceType.dchat,
+        'getCurrentChatTargetId'
+      )
     },
     async setCurrentChatTargetId(targetId: string) {
-      // await window.ipc.invoke(CHANNEL, INSTANCE, 'setCurrentChatTargetId', targetId)
-      // this.targetId = targetId
+      await application.service.call(ServiceType.dchat, 'setCurrentChatTargetId', targetId)
+      this.currentTargetId = targetId
     },
     async subscribe(
       topic: string,
@@ -35,10 +36,8 @@ export const useChatStore = defineStore(STORE_NAME, {
     ) {
       // await window.ipc.invoke(CHANNEL, INSTANCE, 'subscribe', topic, { identifier, fee, meta })
     },
-    async sendText(type: SessionType, to: string, msg: string) {
-      // let message = await window.ipc.invoke(CHANNEL, INSTANCE, 'sendText', type, to, msg)
-      // const messageStore = useMessageStore()
-      // messageStore.messageList.unshift(message)
+    async sendText(type: SessionType = SessionType.CONTACT, to: string, msg: string) {
+      application.service.call(ServiceType.dchat, 'sendText', type, to, msg)
     },
     async sendImage(type: SessionType, to: string, path: string) {
       // let message = await window.ipc.invoke(CHANNEL, INSTANCE, 'sendImage', type, to, path)

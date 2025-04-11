@@ -5,13 +5,15 @@ export interface ContactDbModel {
   created_at?: number
   updated_at?: number
   address: string
+  wallet_address: string
   type?: number
   avatar?: string
   first_name?: string
   last_name?: string
+  remark_name?: string
   profile_version?: string
   profile_expires_at?: number
-  is_top?: boolean
+  is_top?: number
   options?: string
   data?: string
 }
@@ -26,6 +28,11 @@ export interface IContactDb {
 
 export class ContactDb implements IContactDb {
   static tableName = 'contacts'
+  private db: Dexie
+
+  constructor(db: Dexie) {
+    this.db = db
+  }
 
   getContactByAddress(address: string): Promise<ContactDbModel | null> {
     return Promise.resolve(undefined)

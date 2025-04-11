@@ -1,4 +1,4 @@
-import { IService, Service } from '@/common/service'
+import { IService, Service, ServiceType } from '@/common/service'
 import { i18n } from '@/plugins/i18n'
 import { useClientStore } from '@/stores/client'
 import { useCommonStore } from '@/stores/common'
@@ -41,7 +41,9 @@ export class Application {
     }
 
     const commonStore = useCommonStore()
-    await commonStore.getDeviceId()
+    const deviceId = await commonStore.getDeviceId()
+    // init dchat
+    this.service.call(ServiceType.dchat, 'setDeviceId', deviceId)
 
     // init i18n
     const locale = await StoreAdapter.localStorage.get('settings:locale')
@@ -66,6 +68,10 @@ export class Application {
     const password = await walletStore.getPassword()
     if (password !== undefined) {
       const wallet = await walletStore.getDefault()
+      if (wallet === null) {
+        this.loading.value = false
+        return
+      }
       const { seed } = await walletStore.restoreNknWallet(wallet.keystore, password)
       if (seed !== undefined) {
         await clientStore.connect(seed)

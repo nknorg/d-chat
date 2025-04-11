@@ -1,4 +1,4 @@
-import { Connect, Db } from '@d-chat/core'
+import { Connect, Db, Dchat } from '@d-chat/core'
 
 export enum ServiceType {
   Connect = 'Connect',
@@ -13,7 +13,7 @@ export interface IService {
 export const services: Record<ServiceType, any> = {
   [ServiceType.Connect]: Connect,
   [ServiceType.Db]: Db,
-  [ServiceType.dchat]: null
+  [ServiceType.dchat]: new Dchat()
 }
 
 export class Service implements IService {

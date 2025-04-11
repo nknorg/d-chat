@@ -33,7 +33,13 @@ export default defineConfig({
   },
   plugins: [
     nodePolyfills({
-      include: ['buffer', 'crypto'],
+      include: ['buffer'],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true
+      },
+
       protocolImports: true
     }),
     Components({

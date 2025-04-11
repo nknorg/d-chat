@@ -1,5 +1,5 @@
 import { ServiceType } from '@/common/service'
-import { ConnectEvent, Dchat, MessageSchema } from '@d-chat/core'
+import { ConnectEvent, Dchat, MessageSchema, SessionSchema } from '@d-chat/core'
 import { EventEmitter } from 'events'
 import { dchatEventEmitter } from './dchatEvent'
 import { services } from './services'
@@ -9,9 +9,12 @@ class ConnectEventEmitter extends EventEmitter {}
 const connectEventEmitter = new ConnectEventEmitter()
 
 ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
-  services[ServiceType.dchat] = new Dchat()
+  services[ServiceType.dchat].init()
   services[ServiceType.dchat].addMessage = (message: MessageSchema) => {
     dchatEventEmitter.emit('addMessage', message)
+  }
+  services[ServiceType.dchat].updateSession = (session: SessionSchema) => {
+    dchatEventEmitter.emit('updateSession', session)
   }
   connectEventEmitter.emit('onConnect', _id, ...args)
 }

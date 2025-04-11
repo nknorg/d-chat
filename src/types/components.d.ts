@@ -20,11 +20,11 @@ declare module 'vue' {
     MessageItem: typeof import('./../components/chat/MessageItem.vue')['default']
     MyAvatar: typeof import('./../components/contact/MyAvatar.vue')['default']
     Nav: typeof import('./../components/nav/Nav.vue')['default']
-    NewWhisper: typeof import('./../components/dialog/NewWhisper.vue')['default']
     NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectAccount: typeof import('./../components/wallet/SelectAccount.vue')['default']
+    SessionListMessageSummary: typeof import('./../components/chat/contentType/SessionListMessageSummary.vue')['default']
     SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
     SideBar: typeof import('./../components/nav/SideBar.vue')['default']
     Splash: typeof import('./../components/Splash.vue')['default']
@@ -32,6 +32,7 @@ declare module 'vue' {
     SwitchLanguageBtn: typeof import('./../components/button/SwitchLanguageBtn.vue')['default']
     SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
     TextMessage: typeof import('./../components/chat/contentType/TextMessage.vue')['default']
+    UnreadBadge: typeof import('./../components/chat/UnreadBadge.vue')['default']
     Versions: typeof import('./../components/Versions.vue')['default']
   }
 }

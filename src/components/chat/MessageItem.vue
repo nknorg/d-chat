@@ -1,13 +1,12 @@
 <template>
-  <v-row  dense>
-    <v-col  cols="auto">
-      <v-avatar image="https://randomuser.me/api/portraits/women/33.jpg" width="200"></v-avatar>
+  <v-row v-if="!props.message.isOutbound" dense>
+    <v-col cols="auto">
+      <!--      TODO: use contact info-->
+      <v-avatar width="200" color="primary">{{ props.message.targetId.substring(0, 2) }}</v-avatar>
     </v-col>
     <v-col>
       <!-- TODO: add contact name-->
-      <h4>
-        Alice
-      </h4>
+      <h4>{{ props.message.targetId.substring(0, 6) }}</h4>
       <v-alert
         class="alert target-alert body-regular"
         color="primary"
@@ -15,34 +14,34 @@
         prominent
         style="flex: auto"
       >
-        <MessageContent :type="'1'" :content="'asdasdasd'" />
+        <MessageContent :type="message.payload.contentType" :content="message.payload.content" />
         <div class="footer">
-          <v-label class="body-small">10:30</v-label>
+          <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
         </div>
       </v-alert>
     </v-col>
   </v-row>
   <v-alert
-
+    v-else
     class="alert self-alert body-regular"
     color="green"
     theme="dark"
     prominent
     style="flex: auto"
   >
-    <MessageContent :type="'1'" :content="'asdasdasd'" />
+    <MessageContent :type="message.payload.contentType" :content="message.payload.content" />
     <div class="footer">
-      <v-label class="body-small"> 10:30 </v-label>
+      <v-label class="body-small"> 10:30</v-label>
     </div>
   </v-alert>
 </template>
 <script setup lang="ts">
+import { IMessageSchema } from '@d-chat/core'
 import { defineProps } from 'vue'
-
-import MessageContent from './MessageContent.vue'
+import { formatChatTime } from '@/utils/format'
 
 const props = defineProps<{
-
+  message: IMessageSchema
 }>()
 </script>
 <style>

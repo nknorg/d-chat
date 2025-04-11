@@ -1,19 +1,14 @@
 <template>
-  <v-layout class="fill-height justify-start align-start flex-column">
+  <v-layout v-if="props.targetId" class="fill-height justify-start align-start flex-column">
     <v-container
       class="fill-height justify-start align-start flex-column-reverse flex-grow-0 overflow-y-auto message-container"
     >
-      <MessageItem :message="'msg'" class="mb-2" />
-      <MessageItem :message="'msg'" class="mb-2" />
-      <MessageItem :message="'msg'" class="mb-2" />
-      <MessageItem :message="'msg'" class="mb-2" />
-      <MessageItem :message="'msg'" class="mb-2" />
-      <MessageItem :message="'msg'" class="mb-2" />
+      <MessageItem v-for="msg in messageStore.messageList" :message="msg" class="mb-2" />
     </v-container>
 
     <v-container class="d-flex flex-grow-0">
       <div class="mr-2 align-self-end">
-        <v-btn icon color="blue" size="48" @click="state.showExpansion = !state.showExpansion">
+        <v-btn icon color="blue" size="48">
           <svg-icon name="grid" :size="28" />
           <v-menu activator="parent" transition="fade-transition" location="top center">
             <v-card class="d-flex flex-0-0 mt-0 ma-4 pa-4">
@@ -25,6 +20,7 @@
         </v-btn>
       </div>
       <v-textarea
+        v-model="state.message"
         autofocus
         bg-color="grey-lighten-2"
         color="cyan"
@@ -32,9 +28,10 @@
         max-rows="6"
         auto-grow
         hide-details
+        @keydown="handleKeydown"
       ></v-textarea>
       <div class="align-self-end ml-2">
-        <v-btn icon color="blue" size="48">
+        <v-btn icon color="blue" size="48" @click="send">
           <svg-icon name="send" :size="28" />
         </v-btn>
       </div>
@@ -42,30 +39,33 @@
   </v-layout>
 </template>
 <script setup lang="ts">
-import { defineProps, reactive, watch } from 'vue'
+import { useChatStore } from '@/stores/chat'
+import { useMessageStore } from '@/stores/message'
+import { useSessionStore } from '@/stores/session'
+import { IMessageSchema, SessionType } from '@d-chat/core'
+import { defineProps, nextTick, reactive, watch } from 'vue'
 import SvgIcon from '../SvgIcon.vue'
 import MessageItem from './MessageItem.vue'
-import { SessionType } from '@d-chat/core'
+
+const sessionStore = useSessionStore()
+const chatStore = useChatStore()
+const messageStore = useMessageStore()
 
 const props = defineProps<{
-  targetId: string
-  type: SessionType
+  targetId?: string
+  targetType?: SessionType
 }>()
 
-const state = reactive<{ messages: any[]; message: string; showExpansion: boolean }>({
+const state = reactive<{ messages: IMessageSchema[]; message: string }>({
   messages: [],
-  message: '',
-  showExpansion: false
+  message: ''
 })
 
 async function init() {
-  let targetType = props.type
-  if (props.type == null) {
-    // targetType = await sessionStore.queryByTargetId(props.targetId)
-  }
+  if (props.targetId == null || props.targetType == null) return
 
-  // await chatStore.setCurrentChatTargetId(props.targetId)
-  // state.messages = await messageStore.getMessageList(props.targetId, targetType, {})
+  await chatStore.setCurrentChatTargetId(props.targetId)
+  state.messages = await messageStore.getHistoryMessages(props.targetId, props.targetType)
 }
 
 watch(
@@ -75,12 +75,30 @@ watch(
   }
 )
 
-async function send(e) {
-  e.preventDefault()
+async function send() {
   let msg = state.message
   if (msg == '') return
   state.message = ''
-  // await chatStore.sendText(props.type, props.targetId, msg)
+  await chatStore.sendText(props.targetType ?? SessionType.CONTACT, props.targetId, msg)
+}
+
+function handleKeydown(e) {
+  if (e.key === 'Enter') {
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      const textarea = e.target
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const newValue = state.message.slice(0, start) + '\n' + state.message.slice(end)
+      state.message = newValue
+      nextTick(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 1
+      })
+      e.preventDefault()
+    } else {
+      e.preventDefault()
+      send()
+    }
+  }
 }
 
 async function sendImage() {

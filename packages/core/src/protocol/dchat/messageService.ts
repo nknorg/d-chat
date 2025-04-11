@@ -1,59 +1,37 @@
-import { randomUUID } from 'crypto'
+import { v4 as uuidv4 } from 'uuid'
+import nkn from 'nkn-sdk'
 import { MessageContentType } from '../../schema/messageEnum'
-import { SessionType } from '../../schema/sessionEnum'
+import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
 
-export interface IMessageService {
-  getMessageList(
-    targetId: string,
-    targetType: SessionType,
-    options: { limit?: number; offset?: number }
-  ): Promise<any>
-
-  createTextPayload(
-    content: string,
-    options?: { id?: string; deviceId?: string; type?: string; timestamp?: number }
-  ): object
-
-  createImagePayload(
-    content: string,
-    options?: { id?: string; type?: string; timestamp?: number }
-  ): object
-}
-
-export class MessageService implements IMessageService {
-  async getMessageList(targetId: string, targetType: SessionType, { limit = 20, offset = 0 }) {
-    // const res = await this.messageDb.queryByTargetId(targetId, targetType, {
-    //   limit: limit,
-    //   offset: offset
-    // })
-    // return res.map((e) => MessageSchema.fromDbModel(e))
+export class MessageService {
+  static createMessageId(): Uint8Array {
+    return nkn.util.randomBytes(8)
   }
 
-  createTextPayload(
+  static createTextPayload(
     content: string,
-    options?: { id?: string; deviceId?: string; type?: string; timestamp?: number }
-  ): object {
-    const data = {
-      id: options?.id ?? randomUUID().toString(),
+    options?: {
+      id?: string
+      type?: MessageContentType
+      topic?: string
+      groupId?: string
+      deviceId?: string
+      timestamp?: number
+    }
+  ): IPayloadSchema {
+    const data: IPayloadSchema = {
+      id: options?.id ?? uuidv4(),
       timestamp: options?.timestamp ?? Date.now(),
       deviceId: options?.deviceId,
       contentType: options?.type ?? MessageContentType.text,
       content: content
     }
+    if (options?.topic) {
+      data.topic = options.topic
+    }
+    if (options?.groupId) {
+      data.groupId = options.groupId
+    }
     return data
-  }
-
-  createImagePayload(
-    content: string,
-    options?: { id?: string; type?: string; timestamp?: number }
-  ): object {
-    // const data = {
-    //   'id': options?.id ?? randomUUID().toString(),
-    //   'timestamp': options?.timestamp ?? Date.now(),
-    //   'deviceId': Global.deviceId,
-    //   'contentType': options?.type ?? MessageContentType.image,
-    //   'content': content
-    // }
-    // return data
   }
 }

@@ -30,14 +30,16 @@ export class Db {
   static async onCreate(db: Dexie, version: number) {
     db.version(version).stores({
       messages:
-        '++id, message_id, msg_id, created_at, updated_at, [target_id+target_type+sent_at], [target_id+target_type+status+sent_at], [target_id+target_type+is_delete+sent_at], [target_id+target_type+is_outbound+sent_at], [target_id+target_type+status+is_delete+sent_at], [target_id+target_type+is_outbound+status+sent_at], [target_id+target_type+is_outbound+is_delete+sent_at], [target_id+target_type+is_outbound+status+is_delete+sent_at]',
+        '++id, message_id, payload_id, msg_id, created_at, updated_at, [target_id+target_type+is_delete+sent_at]',
+      sessions:
+        '++id, target_id, target_type, last_message_outbound, last_message_at, un_read_count, is_top, &[target_id+target_type], [is_top+last_message_at]',
       contacts:
         '++id, address, created_at, updated_at, first_name, last_name, [type+created_at], [type+updated_at]'
     })
   }
 
   static async onUpgrade(db: Dexie, oldVersion: number, newVersion: number) {
-    // db.version(newVersion).upgrade()
+
   }
 
   static close(id: string) {
@@ -48,14 +50,14 @@ export class Db {
     }
   }
 
-  static async getDb(id: string) {
+  static getDb(id: string) {
     if (this.db[id]) {
       return this.db[id]
     }
     throw new Error(`Database ${id} not found`)
   }
 
-  static async getLastOpenedDb() {
+  static getLastOpenedDb() {
     if (this.lastOpenedId) {
       return this.db[this.lastOpenedId]
     }
