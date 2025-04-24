@@ -1,5 +1,5 @@
 import { ServiceType } from '@/common/service'
-import { ConnectEvent, Dchat, MessageSchema, SessionSchema } from '@d-chat/core'
+import { ConnectEvent, MessageSchema, SessionSchema } from '@d-chat/core'
 import { EventEmitter } from 'events'
 import { dchatEventEmitter } from './dchatEvent'
 import { services } from './services'

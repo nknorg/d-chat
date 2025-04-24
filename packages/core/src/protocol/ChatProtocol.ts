@@ -32,4 +32,31 @@ export interface ChatProtocol {
   ): Promise<MessageSchema[]>
 
   readAllMessagesByTargetId(targetId: string, targetType: SessionType): Promise<void>
+
+  // subscribe
+  getBlockHeight(): Promise<number>
+
+  getNonce(): Promise<number>
+
+  subscribeTopic(
+    topicId: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
+  ): Promise<void>
+
+  unsubscribeTopic(
+    topicId: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
+  ): Promise<void>
+
+  getTopicSubscribers(topic: string): Promise<string[]>
 }

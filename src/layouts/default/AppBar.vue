@@ -3,6 +3,7 @@
     <MyAvatar />
 
     <v-spacer></v-spacer>
+    <NewTabBtn />
     <SwitchThemeBtn />
     <SwitchLanguageBtn />
     <SettingsBtn />

@@ -2,10 +2,14 @@
   <v-navigation-drawer theme="dark" rail permanent>
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-chat-plus" @click="null">
+        <v-tooltip activator="parent">{{ $t('new_whisper') }}</v-tooltip>
         <NewWhisperDialog />
       </v-list-item>
-      <v-list-item prepend-icon="mdi-forum-plus"></v-list-item>
-<!--      <v-list-item prepend-icon="mdi-view-dashboard" value="dashboard"></v-list-item>-->
+      <v-list-item prepend-icon="mdi-forum-plus" @click="null">
+        <v-tooltip activator="parent">{{ $t('create_channel') }}</v-tooltip>
+        <NewPublicGroupDialog />
+      </v-list-item>
+      <!--      <v-list-item prepend-icon="mdi-view-dashboard" value="dashboard"></v-list-item>-->
       <v-list-item class="align-self-auto">
         <v-icon icon="mdi-power" color="red" />
         <v-tooltip activator="parent">{{ $t('sign_out') }}</v-tooltip>

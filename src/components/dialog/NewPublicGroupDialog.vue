@@ -4,22 +4,18 @@
       <v-form fast-fail @submit.prevent="submit">
         <v-card class="pt-2">
           <v-card-title>
-            <span class="text-h5">{{ $t('new_whisper') }}</span>
+            <span class="text-h5">{{ $t('create_channel') }}</span>
           </v-card-title>
           <v-card-text>
             <v-row>
               <v-text-field
                 v-model="state.sendTo"
                 :label="$t('send_to')"
-                :placeholder="$t('enter_or_select_a_user_pubkey')"
+                :placeholder="$t('enter_topic')"
                 autofocus
                 required
-                :rules="[validator.required(), validator.isValidDchatAddress()]"
+                :rules="[validator.required()]"
               >
-                <template v-slot:append-inner>
-                  <!--TODO: select user-->
-                  <v-icon>mdi-clipboard-account</v-icon>
-                </template>
               </v-text-field>
             </v-row>
           </v-card-text>
@@ -39,6 +35,8 @@
 </template>
 
 <script setup lang="ts">
+import { application } from '@/common/application'
+import { ServiceType } from '@/common/service'
 import { Validator } from '@/helpers/validator'
 import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
@@ -63,7 +61,7 @@ async function submit(event) {
           isTop: false,
           lastMessageOutbound: true,
           targetId: state.sendTo,
-          targetType: SessionType.CONTACT,
+          targetType: SessionType.TOPIC,
           lastMessageAt: new Date().getTime(),
           unReadCount: 0
         })
@@ -71,7 +69,10 @@ async function submit(event) {
     }
 
     await chatStore.setCurrentChatTargetId(state.sendTo)
-    chatStore.currentTargetType = SessionType.CONTACT
+    chatStore.currentTargetType = SessionType.TOPIC
+
+    application.service.call(ServiceType.dchat, 'getTopicSubscribers', state.sendTo)
+
     state.dialog = false
   }
 }

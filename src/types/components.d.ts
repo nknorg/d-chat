@@ -20,6 +20,8 @@ declare module 'vue' {
     MessageItem: typeof import('./../components/chat/MessageItem.vue')['default']
     MyAvatar: typeof import('./../components/contact/MyAvatar.vue')['default']
     Nav: typeof import('./../components/nav/Nav.vue')['default']
+    NewPublicGroupDialog: typeof import('./../components/dialog/NewPublicGroupDialog.vue')['default']
+    NewTabBtn: typeof import('./../components/button/NewTabBtn.vue')['default']
     NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

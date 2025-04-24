@@ -26,5 +26,13 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'off'
     }
   },
+  {
+    files: ['**/*.{ts,mts,tsx,vue}'],
+    languageOptions: {
+      globals: {
+        chrome: 'readonly'
+      }
+    }
+  },
   eslintConfigPrettier
 )

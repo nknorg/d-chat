@@ -13,7 +13,6 @@ export interface ContactDbModel {
   remark_name?: string
   profile_version?: string
   profile_expires_at?: number
-  is_top?: number
   options?: string
   data?: string
 }

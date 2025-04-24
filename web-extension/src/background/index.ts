@@ -20,13 +20,16 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
   }
 })
 
+// @ts-ignore
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   ;(async (): Promise<void> => {
     if (message.type === 'service') {
       const result = services[message.service][message.method](...message.args)
       if (result instanceof Promise) {
+        // @ts-ignore
         sendResponse(await result)
       } else {
+        // @ts-ignore
         sendResponse(result)
       }
     }

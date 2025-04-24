@@ -12,6 +12,7 @@ import { AddMessageHandler, ChatProtocol, UpdateSessionHandler } from '../ChatPr
 import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { MessageService } from './messageService'
+import { SubscribeService } from './subscribeService'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -332,4 +333,56 @@ export class Dchat implements ChatProtocol {
       logger.error(e)
     }
   }
+
+  async getBlockHeight(): Promise<number> {
+    try {
+      const block = await this.client.getLatestBlock()
+      return block.height
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getNonce(): Promise<number> {
+    try {
+      const nonce = await this.client.getNonce(this.client.addr, { txPool: true })
+      return nonce
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getTopicSubscribers(topic: string): Promise<string[]> {
+    try {
+      return await SubscribeService.getSubscribers({
+        client: this.client,
+        topic: topic
+      })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async subscribeTopic(
+    topicId: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
+  ): Promise<void> {}
+
+  async unsubscribeTopic(
+    topicId: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
+  ): Promise<void> {}
 }

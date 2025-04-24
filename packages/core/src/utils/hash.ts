@@ -1,5 +1,3 @@
-import * as crypto from 'crypto'
-
 export function bytesToHex(bytes: Uint8Array): string {
   return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
 }
@@ -29,7 +27,7 @@ export async function sha1(raw: string) {
   } else {
     const encoder = new TextEncoder()
     const data = encoder.encode(raw)
-    const hashBuffer = await crypto.subtle.digest('SHA-1', data)
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', data)
     return Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')

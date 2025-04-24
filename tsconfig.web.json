@@ -25,7 +25,7 @@
       "@intlify/unplugin-vue-i18n/messages",
       "chrome-types"
     ],
-    "strict": true,
+    "strict": false,
     "noEmit": true,
     "esModuleInterop": true,
     "isolatedModules": true,

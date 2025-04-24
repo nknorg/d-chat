@@ -23,16 +23,7 @@ export const useChatStore = defineStore(STORE_NAME, {
       this.currentTargetId = targetId
     },
     async subscribe(
-      topic: string,
-      {
-        identifier = '',
-        fee = 0,
-        meta = ''
-      }: {
-        identifier?: string
-        fee?: number
-        meta?: string
-      }
+      topic: string
     ) {
       // await window.ipc.invoke(CHANNEL, INSTANCE, 'subscribe', topic, { identifier, fee, meta })
     },
