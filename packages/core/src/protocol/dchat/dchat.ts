@@ -1,5 +1,6 @@
 import { Message, MultiClient } from 'nkn-sdk'
 import { Connect } from '../../chat/connect'
+import { ContactSchema } from '../../schema/contact'
 import { MessageSchema } from '../../schema/message'
 import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
 import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
@@ -30,8 +31,6 @@ export class Dchat implements ChatProtocol {
 
   private _addMessage?: AddMessageHandler
   private _updateSession?: UpdateSessionHandler
-
-  constructor() {}
 
   init() {
     this.client = Connect.getLastSignClient()
@@ -93,6 +92,8 @@ export class Dchat implements ChatProtocol {
 
   async handleContact(message: MessageSchema) {}
 
+  async handleTopic(message: MessageSchema) {}
+
   async handleMessage(raw: Message) {
     if (raw.payloadType == PayloadType.TEXT) {
       let data: any
@@ -110,12 +111,17 @@ export class Dchat implements ChatProtocol {
       let sessionType = 0
       let messageStatus = MessageStatus.Error
 
+      const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr, {
+        isOutbound: raw.src === this.client.addr
+      })
       if (payload.topic != null) {
         sessionType = SessionType.TOPIC
+        await this.handleTopic(message)
       } else if (payload.groupId != null) {
         sessionType = SessionType.PRIVATE_GROUP
       } else {
         sessionType = SessionType.CONTACT
+        await this.handleContact(message)
       }
       messageStatus = MessageStatus.Sent
 
@@ -150,12 +156,6 @@ export class Dchat implements ChatProtocol {
         return
       }
 
-      // TODO: d-chat protocol
-      // await this.handleContactMessage(message)
-
-      const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr, {
-        isOutbound: raw.src === this.client.addr
-      })
       const record = await this.saveMessage(message)
       if (record != null) {
         this._addMessage?.(record)
@@ -463,6 +463,7 @@ export class Dchat implements ChatProtocol {
       // 3. Send topicSubscribe message if it's a new subscription
       if (isNewSubscription) {
         const payload = MessageService.createTopicSubscribePayload(topic)
+        payload.deviceId = this._deviceId
         const dest = await this.getTopicSubscribersFromDb(topic)
         await this.send(dest, payload)
       }
@@ -500,6 +501,7 @@ export class Dchat implements ChatProtocol {
 
       // 3. Send topicUnsubscribe message to other subscribers
       const payload = MessageService.createTopicUnsubscribePayload(topic)
+      payload.deviceId = this._deviceId
       const dest = await this.getTopicSubscribersFromDb(topic)
       await this.send(dest, payload)
     } catch (e) {
@@ -578,5 +580,18 @@ export class Dchat implements ChatProtocol {
       logger.error('Failed to get topic subscribers from database:', e)
       return []
     }
+  }
+
+  // Contact
+  async getContactByAddress(address: string): Promise<ContactSchema | null> {
+    return Promise.resolve(undefined)
+  }
+
+  async getContactList(): Promise<string[]> {
+    return Promise.resolve([])
+  }
+
+  async requestContactData(address: string): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

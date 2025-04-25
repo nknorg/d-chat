@@ -1,5 +1,5 @@
 <template>
-  <v-main height="100vh">
+  <v-main :height="$vuetify.display.height">
     <router-view />
   </v-main>
 </template>

@@ -8,6 +8,8 @@
           </router-link>
 
           <v-spacer></v-spacer>
+          <RefreshBtn />
+          <NewTabBtn />
           <SwitchThemeBtn />
           <SwitchLanguageBtn />
           <SettingsBtn />

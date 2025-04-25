@@ -2,6 +2,9 @@
   <v-row v-if="props.message.payload.contentType === MessageContentType.topicSubscribe" class="align-self-center">
     <TopicSubscribe :message="props.message" />
   </v-row>
+  <v-row v-else-if="props.message.payload.contentType === MessageContentType.topicUnsubscribe" class="align-self-center">
+    <TopicUnsubscribe :message="props.message" />
+  </v-row>
   <v-row v-else-if="!props.message.isOutbound" dense>
     <v-col cols="auto">
       <!--      TODO: use contact info-->

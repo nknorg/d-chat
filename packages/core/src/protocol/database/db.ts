@@ -1,11 +1,15 @@
 import Dexie, { EntityTable } from 'dexie'
 import { StoreAdapter } from '../../store/storeAdapter'
 import { logger } from '../../utils/log'
+import { CacheDbModel } from './cache.ts'
 import { ContactDbModel } from './contact'
 import { MessageDbModel } from './message'
 import { SessionDbModel } from './session.ts'
 import { SubscriberDbModel } from './subscriber.ts'
 import { TopicDbModel } from './topic.ts'
+
+// Configure Dexie to avoid eval usage
+Dexie.debug = false
 
 export class Db {
   static NKN_DATABASE_NAME = 'nkn'
@@ -22,19 +26,17 @@ export class Db {
       contacts: EntityTable<ContactDbModel, 'id'>
       topics: EntityTable<TopicDbModel, 'id'>
       subscribers: EntityTable<SubscriberDbModel, 'id'>
+      caches: EntityTable<CacheDbModel, 'id'>
     }
     this.db[publicKey] = db
 
     db.version(4).stores({
-      messages:
-        '++id, message_id, payload_id, msg_id, created_at, updated_at, [target_id+target_type+is_delete+sent_at]',
-      sessions:
-        '++id, target_id, target_type, last_message_outbound, last_message_at, un_read_count, is_top, &[target_id+target_type], [is_top+last_message_at]',
-      topics:
-        '++id, &topic, created_at, updated_at, joined, subscribe_at, expire_height, avatar, count, &[topic+contact_address]',
+      messages: '++id, message_id, payload_id, msg_id, created_at, updated_at, [target_id+target_type+is_delete+sent_at]',
+      sessions: '++id, target_id, target_type, last_message_outbound, last_message_at, un_read_count, is_top, &[target_id+target_type], [is_top+last_message_at]',
+      topics: '++id, &topic, created_at, updated_at, joined, subscribe_at, expire_height, avatar, count, &[topic+contact_address]',
       subscribers: '++id, topic, created_at, updated_at, contact_address, status',
-      contacts:
-        '++id, address, created_at, updated_at, first_name, last_name, [type+created_at], [type+updated_at]'
+      contacts: '++id, address, created_at, updated_at, first_name, last_name, [type+created_at], [type+updated_at]',
+      caches: '++id, type, expiresAt, lastAccessed, tags'
     })
 
     this.lastOpenedId = publicKey

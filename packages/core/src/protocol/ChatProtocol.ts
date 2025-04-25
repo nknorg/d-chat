@@ -1,3 +1,4 @@
+import { ContactSchema } from '../schema/contact.ts'
 import { MessageSchema } from '../schema/message'
 import { IPayloadSchema } from '../schema/payload'
 import { SessionSchema } from '../schema/session'
@@ -50,4 +51,9 @@ export interface ChatProtocol {
   getTopicSubscribers(topic: string): Promise<string[]>
 
   getTopicSubscribersCount(topic: string): Promise<number>
+
+  // Contact
+  getContactList(): Promise<string[]>
+  getContactByAddress(address: string): Promise<ContactSchema | null>
+  requestContactData(address: string): Promise<void>
 }

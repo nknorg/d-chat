@@ -1,4 +1,5 @@
 import Dexie from 'dexie'
+import { logger } from '../../utils/log'
 
 export interface ContactDbModel {
   id?: number
@@ -18,11 +19,11 @@ export interface ContactDbModel {
 }
 
 export interface IContactDb {
-  insert(model: ContactDbModel): Promise<boolean>
-
-  getContactByAddress(address: string): Promise<ContactDbModel | null>
+  insert(model: ContactDbModel): Promise<void>
 
   update(model: ContactDbModel): Promise<void>
+
+  getContactByAddress(address: string): Promise<ContactDbModel | null>
 }
 
 export class ContactDb implements IContactDb {
@@ -33,15 +34,30 @@ export class ContactDb implements IContactDb {
     this.db = db
   }
 
-  getContactByAddress(address: string): Promise<ContactDbModel | null> {
-    return Promise.resolve(undefined)
+  async getContactByAddress(address: string): Promise<ContactDbModel | null> {
+    try {
+      return await this.db.table(ContactDb.tableName).where('address').equals(address).first() || null
+    } catch (e) {
+      logger.error(e)
+      return null
+    }
   }
 
-  insert(model: ContactDbModel): Promise<boolean> {
-    return Promise.resolve(false)
+  async insert(model: ContactDbModel): Promise<void> {
+    try {
+      await this.db.table(ContactDb.tableName).add(model)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 
-  update(model: ContactDbModel): Promise<void> {
-    return Promise.resolve(undefined)
+  async update(model: ContactDbModel): Promise<void> {
+    try {
+      await this.db.table(ContactDb.tableName).put(model)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 }
