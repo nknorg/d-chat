@@ -1,4 +1,5 @@
 import { MessageSchema } from '../schema/message'
+import { IPayloadSchema } from '../schema/payload'
 import { SessionSchema } from '../schema/session'
 import { SessionType } from '../schema/sessionEnum'
 
@@ -17,6 +18,8 @@ export interface ChatProtocol {
   setDeviceId(deviceId: string): void
 
   getDeviceId(): string
+
+  send(dest: string[] | string, payload: IPayloadSchema): Promise<void>
 
   sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema>
 
@@ -39,7 +42,7 @@ export interface ChatProtocol {
   getNonce(): Promise<number>
 
   subscribeTopic(
-    topicId: string,
+    topic: string,
     {
       nonce,
       fee,
@@ -49,7 +52,7 @@ export interface ChatProtocol {
   ): Promise<void>
 
   unsubscribeTopic(
-    topicId: string,
+    topic: string,
     {
       nonce,
       fee,
@@ -59,4 +62,6 @@ export interface ChatProtocol {
   ): Promise<void>
 
   getTopicSubscribers(topic: string): Promise<string[]>
+
+  getTopicSubscribersCount(topic: string): Promise<number>
 }

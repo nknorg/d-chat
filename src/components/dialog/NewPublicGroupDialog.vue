@@ -9,6 +9,8 @@
           <v-card-text>
             <v-row>
               <v-text-field
+                :loading="state.loading"
+                :disabled="state.loading"
                 v-model="state.sendTo"
                 :label="$t('send_to')"
                 :placeholder="$t('enter_topic')"
@@ -21,10 +23,10 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue-darken-1" variant="text" @click="isActive.value = false">
+            <v-btn color="blue-darken-1" variant="text" @click="isActive.value = false" :disabled="state.loading">
               {{ $t('cancel') }}
             </v-btn>
-            <v-btn color="blue-darken-1" variant="text" type="submit">
+            <v-btn color="blue-darken-1" variant="text" type="submit" :loading="state.loading" :disabled="state.loading">
               {{ $t('ok') }}
             </v-btn>
           </v-card-actions>
@@ -35,8 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import { application } from '@/common/application'
-import { ServiceType } from '@/common/service'
 import { Validator } from '@/helpers/validator'
 import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
@@ -48,6 +48,7 @@ const sessionStore = useSessionStore()
 const validator = new Validator()
 
 const state = reactive({
+  loading: false,
   dialog: false,
   sendTo: ''
 })
@@ -67,11 +68,9 @@ async function submit(event) {
         })
       )
     }
-
-    await chatStore.setCurrentChatTargetId(state.sendTo)
-    chatStore.currentTargetType = SessionType.TOPIC
-
-    application.service.call(ServiceType.dchat, 'getTopicSubscribers', state.sendTo)
+    state.loading = true
+    await chatStore.subscribeTopic(state.sendTo)
+    state.loading = false
 
     state.dialog = false
   }

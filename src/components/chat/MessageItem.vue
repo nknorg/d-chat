@@ -1,47 +1,37 @@
 <template>
-  <v-row v-if="!props.message.isOutbound" dense>
+  <v-row v-if="props.message.payload.contentType === MessageContentType.topicSubscribe" class="align-self-center">
+    <TopicSubscribe :message="props.message" />
+  </v-row>
+  <v-row v-else-if="!props.message.isOutbound" dense>
     <v-col cols="auto">
       <!--      TODO: use contact info-->
-      <v-avatar width="200" color="primary">{{ props.message.targetId.substring(0, 2) }}</v-avatar>
+      <v-avatar width="200" color="primary">{{ props.message.sender.substring(0, 2) }}</v-avatar>
     </v-col>
     <v-col>
       <!-- TODO: add contact name-->
-      <h4>{{ props.message.targetId.substring(0, 6) }}</h4>
-      <v-alert
-        class="alert target-alert body-regular"
-        color="primary"
-        theme="dark"
-        prominent
-        style="flex: auto"
-      >
-        <MessageContent :type="message.payload.contentType" :content="message.payload.content" />
+      <h4>{{ props.message.sender.substring(0, 6) }}</h4>
+      <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent style="flex: auto">
+        <MessageContent :message="props.message" />
         <div class="footer">
           <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
         </div>
       </v-alert>
     </v-col>
   </v-row>
-  <v-alert
-    v-else
-    class="alert self-alert body-regular"
-    color="green"
-    theme="dark"
-    prominent
-    style="flex: auto"
-  >
-    <MessageContent :type="message.payload.contentType" :content="message.payload.content" />
+  <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="green" theme="dark" prominent style="flex: auto">
+    <MessageContent :message="props.message" />
     <div class="footer">
       <v-label class="body-small"> 10:30</v-label>
     </div>
   </v-alert>
 </template>
 <script setup lang="ts">
-import { IMessageSchema } from '@d-chat/core'
+import { MessageContentType, MessageSchema } from '@d-chat/core'
 import { defineProps } from 'vue'
 import { formatChatTime } from '@/utils/format'
 
 const props = defineProps<{
-  message: IMessageSchema
+  message: MessageSchema
 }>()
 </script>
 <style>

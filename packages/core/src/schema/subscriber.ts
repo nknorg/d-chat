@@ -5,7 +5,7 @@ export interface ISubscriberSchema {
   id?: number
   createdAt?: number
   updatedAt?: number
-  topicId: string
+  topic: string
   contactAddress: string
   status: SubscriberStatus
   data?: object
@@ -15,7 +15,7 @@ export class SubscriberSchema implements ISubscriberSchema {
   public id?: number
   public createdAt?: number
   public updatedAt?: number
-  public topicId: string
+  public topic: string
   public contactAddress: string
   public status: SubscriberStatus
   public data?: object
@@ -24,7 +24,7 @@ export class SubscriberSchema implements ISubscriberSchema {
     this.id = schema.id
     this.createdAt = schema.createdAt
     this.updatedAt = schema.updatedAt
-    this.topicId = schema.topicId
+    this.topic = schema.topic
     this.contactAddress = schema.contactAddress
     this.status = schema.status
     this.data = schema.data
@@ -35,7 +35,7 @@ export class SubscriberSchema implements ISubscriberSchema {
       id: this.id,
       created_at: this.createdAt,
       updated_at: this.updatedAt,
-      topic_id: this.topicId,
+      topic: this.topic,
       contact_address: this.contactAddress,
       status: this.status,
       data: this.data != null ? JSON.stringify(this.data) : undefined
@@ -47,7 +47,7 @@ export class SubscriberSchema implements ISubscriberSchema {
       id: model.id,
       createdAt: model.created_at,
       updatedAt: model.updated_at,
-      topicId: model.topic_id,
+      topic: model.topic,
       contactAddress: model.contact_address,
       status: model.status,
       data: model.data ? JSON.parse(model.data) : undefined

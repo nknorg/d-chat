@@ -1,13 +1,4 @@
-import {
-  Destination,
-  Message,
-  MessageData,
-  MultiClient,
-  MultiClientOptions,
-  ReplyData,
-  SendOptions,
-  Wallet
-} from 'nkn-sdk'
+import { Message, MultiClient, MultiClientOptions, Wallet } from 'nkn-sdk'
 import { StoreAdapter } from '../store/storeAdapter'
 import { ensureUrl } from '../utils/format'
 import { logger } from '../utils/log'

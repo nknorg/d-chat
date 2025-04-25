@@ -10,6 +10,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     ChatContainer: typeof import('./../components/chat/ChatContainer.vue')['default']
     ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
+    ContactListItem: typeof import('./../components/chat/sessionType/ContactListItem.vue')['default']
+    ContactSessionItem: typeof import('./../components/chat/sessionType/ContactSessionItem.vue')['default']
     Footer: typeof import('./../components/Footer.vue')['default']
     HelloWorld: typeof import('./../components/HelloWorld.vue')['default']
     ImageMessage: typeof import('./../components/chat/contentType/ImageMessage.vue')['default']
@@ -26,6 +28,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectAccount: typeof import('./../components/wallet/SelectAccount.vue')['default']
+    SessionListItem: typeof import('./../components/chat/SessionListItem.vue')['default']
     SessionListMessageSummary: typeof import('./../components/chat/contentType/SessionListMessageSummary.vue')['default']
     SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
     SideBar: typeof import('./../components/nav/SideBar.vue')['default']
@@ -34,6 +37,8 @@ declare module 'vue' {
     SwitchLanguageBtn: typeof import('./../components/button/SwitchLanguageBtn.vue')['default']
     SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
     TextMessage: typeof import('./../components/chat/contentType/TextMessage.vue')['default']
+    TopicSessionItem: typeof import('./../components/chat/sessionType/TopicSessionItem.vue')['default']
+    TopicSubscribe: typeof import('./../components/chat/contentType/TopicSubscribe.vue')['default']
     UnreadBadge: typeof import('./../components/chat/UnreadBadge.vue')['default']
     Versions: typeof import('./../components/Versions.vue')['default']
   }

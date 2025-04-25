@@ -1,4 +1,4 @@
-import { MultiClient } from 'nkn-sdk'
+import { MultiClient, TxnOrHash } from 'nkn-sdk'
 import { genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
 import { NknError } from '../error/nknError.ts'
@@ -26,8 +26,9 @@ export class SubscribeService {
     meta?: string
   }): Promise<string> {
     const topicId = await genChannelId(topic)
+    let result: TxnOrHash
     try {
-      const result = await client.subscribe(
+      result = await client.subscribe(
         topicId,
         duration ?? blockHeightTopicSubscribeDefault,
         identifier,

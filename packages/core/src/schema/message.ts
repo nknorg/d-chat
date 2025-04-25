@@ -57,7 +57,12 @@ export class MessageSchema implements IMessageSchema {
     this.payload = schema.payload
   }
 
-  static fromRawMessage(raw: Message, from: string, to: string): MessageSchema | null {
+  static fromRawMessage(
+    raw: Message,
+    from: string,
+    to: string,
+    { isOutbound = false }: { isOutbound?: boolean } = {}
+  ): MessageSchema | null {
     if (raw.payloadType == PayloadType.TEXT) {
       let data: any
       try {
@@ -90,7 +95,7 @@ export class MessageSchema implements IMessageSchema {
         receiver: to,
         targetId: targetId,
         targetType: targetType,
-        isOutbound: false,
+        isOutbound: isOutbound,
         isDelete: false,
         status: MessageStatus.Sent,
         sentAt: data.timestamp ?? now,

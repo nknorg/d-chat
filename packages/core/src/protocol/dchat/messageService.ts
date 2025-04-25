@@ -34,4 +34,22 @@ export class MessageService {
     }
     return data
   }
+
+  static createTopicSubscribePayload(topic: string): IPayloadSchema {
+    return {
+      id: uuidv4(),
+      timestamp: Date.now(),
+      contentType: MessageContentType.topicSubscribe,
+      topic: topic
+    }
+  }
+
+  static createTopicUnsubscribePayload(topic: string): IPayloadSchema {
+    return {
+      id: uuidv4(),
+      timestamp: Date.now(),
+      contentType: MessageContentType.topicUnsubscribe,
+      topic: topic
+    }
+  }
 }

@@ -5,7 +5,7 @@ export interface SubscriberDbModel {
   id?: number
   created_at: number
   updated_at?: number
-  topic_id: string
+  topic: string
   contact_address: string
   status: number
   data?: string
@@ -13,8 +13,10 @@ export interface SubscriberDbModel {
 
 export interface ISubscriberDb {
   insert(model: SubscriberDbModel): Promise<void>
-
   update(model: SubscriberDbModel): Promise<void>
+  getByTopic(topic: string): Promise<SubscriberDbModel[]>
+  delete(id: number): Promise<void>
+  deleteByTopicAndContactAddress(topic: string, contactAddress: string): Promise<void>
 }
 
 export class SubscriberDb implements ISubscriberDb {
@@ -25,11 +27,51 @@ export class SubscriberDb implements ISubscriberDb {
     this.db = db
   }
 
-  insert(model: SubscriberDbModel): Promise<void> {
-    return Promise.resolve(undefined)
+  async insert(model: SubscriberDbModel): Promise<void> {
+    try {
+      await this.db.table(SubscriberDb.tableName).add(model)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 
-  update(model: SubscriberDbModel): Promise<void> {
-    return Promise.resolve(undefined)
+  async update(model: SubscriberDbModel): Promise<void> {
+    try {
+      await this.db.table(SubscriberDb.tableName).put(model)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getByTopic(topic: string): Promise<SubscriberDbModel[]> {
+    try {
+      return await this.db.table(SubscriberDb.tableName).where('topic').equals(topic).toArray()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async delete(id: number): Promise<void> {
+    try {
+      await this.db.table(SubscriberDb.tableName).delete(id)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async deleteByTopicAndContactAddress(topic: string, contactAddress: string): Promise<void> {
+    try {
+      await this.db.table(SubscriberDb.tableName)
+        .where(['topic', 'contact_address'])
+        .equals([topic, contactAddress])
+        .delete()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 }

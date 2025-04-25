@@ -2,17 +2,22 @@ import { Message, MultiClient } from 'nkn-sdk'
 import { Connect } from '../../chat/connect'
 import { MessageSchema } from '../../schema/message'
 import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
-import { PayloadSchema } from '../../schema/payload'
+import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
 import { SessionSchema } from '../../schema/session'
 import { SessionType } from '../../schema/sessionEnum'
+import { SubscriberSchema } from '../../schema/subscriber'
+import { SubscriberStatus } from '../../schema/subscriberEnum'
+import { TopicSchema } from '../../schema/topic'
 import { StoreAdapter } from '../../store/storeAdapter'
 import { genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
 import { AddMessageHandler, ChatProtocol, UpdateSessionHandler } from '../ChatProtocol'
 import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
+import { SubscriberDb } from '../database/subscriber'
+import { TopicDb } from '../database/topic'
 import { MessageService } from './messageService'
-import { SubscribeService } from './subscribeService'
+import { blockHeightTopicSubscribeDefault, SubscribeService } from './subscribeService'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -61,7 +66,32 @@ export class Dchat implements ChatProtocol {
     // TODO: handle receipt message
   }
 
-  async handleContactMessage(message: MessageSchema) {}
+  async receiveTopicSubscribeMessage(src: string, topic: string) {
+    const topicDb = new TopicDb(this.db)
+    const subscriberDb = new SubscriberDb(this.db)
+
+    try {
+      // 1. Update topic subscriber count
+      const existingTopic = await topicDb.getByTopic(topic)
+      if (existingTopic) {
+        existingTopic.count = existingTopic.count + 1
+        await topicDb.put(existingTopic)
+      }
+
+      // 2. Add new subscriber
+      const subscriber = new SubscriberSchema({
+        topic: topic,
+        contactAddress: src,
+        status: SubscriberStatus.Subscribed,
+        createdAt: Date.now()
+      })
+      await subscriberDb.insert(subscriber.toDbModel())
+    } catch (e) {
+      logger.error('Failed to handle topic subscribe message:', e)
+    }
+  }
+
+  async handleContact(message: MessageSchema) {}
 
   async handleMessage(raw: Message) {
     if (raw.payloadType == PayloadType.TEXT) {
@@ -80,6 +110,15 @@ export class Dchat implements ChatProtocol {
       let sessionType = 0
       let messageStatus = MessageStatus.Error
 
+      if (payload.topic != null) {
+        sessionType = SessionType.TOPIC
+      } else if (payload.groupId != null) {
+        sessionType = SessionType.PRIVATE_GROUP
+      } else {
+        sessionType = SessionType.CONTACT
+      }
+      messageStatus = MessageStatus.Sent
+
       switch (payload.contentType) {
         case MessageContentType.receipt:
           messageStatus = MessageStatus.Receipt
@@ -92,9 +131,14 @@ export class Dchat implements ChatProtocol {
         case MessageContentType.image:
         case MessageContentType.video:
         case MessageContentType.file:
-          this.receipt(raw.src, payload.id)
-          sessionType = SessionType.CONTACT
-          messageStatus = MessageStatus.Sent | MessageStatus.Receipt
+          if (sessionType == SessionType.CONTACT) {
+            this.receipt(raw.src, payload.id)
+            messageStatus = MessageStatus.Sent | MessageStatus.Receipt
+          }
+          break
+
+        case MessageContentType.topicSubscribe:
+          this.receiveTopicSubscribeMessage(raw.src, payload.topic)
           break
         default:
           logger.error('not support message type')
@@ -109,7 +153,9 @@ export class Dchat implements ChatProtocol {
       // TODO: d-chat protocol
       // await this.handleContactMessage(message)
 
-      const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr)
+      const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr, {
+        isOutbound: raw.src === this.client.addr
+      })
       const record = await this.saveMessage(message)
       if (record != null) {
         this._addMessage?.(record)
@@ -207,6 +253,16 @@ export class Dchat implements ChatProtocol {
     } catch (e) {
       logger.error(e)
       return null
+    }
+  }
+
+  async send(dest: string[] | string, payload: IPayloadSchema): Promise<void> {
+    try {
+      await this.client.send(dest, JSON.stringify(payload), {
+        ...this.sendOptions
+      })
+    } catch (e) {
+      logger.error(e)
     }
   }
 
@@ -327,8 +383,10 @@ export class Dchat implements ChatProtocol {
       await messageDb.updateStatusByTargetId(targetId, targetType, MessageStatus.Read)
       const sessionDb = new SessionDb(this.db)
       const record = await sessionDb.query(targetId, targetType)
-      record.un_read_count = 0
-      await sessionDb.update(record)
+      if (record) {
+        record.un_read_count = 0
+        await sessionDb.update(record)
+      }
     } catch (e) {
       logger.error(e)
     }
@@ -366,23 +424,177 @@ export class Dchat implements ChatProtocol {
     }
   }
 
+  async getTopicSubscribersCount(topic: string): Promise<number> {
+    try {
+      return await SubscribeService.getSubscribersCount({
+        client: this.client,
+        topic: topic
+      })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
   async subscribeTopic(
-    topicId: string,
+    topic: string,
     {
       nonce,
       fee,
       identifier,
       meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
-  ): Promise<void> {}
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}
+  ): Promise<void> {
+    try {
+      let isNewSubscription = true
+      try {
+        // 1. Subscribe to the topic
+        const result = await SubscribeService.subscribe({
+          client: this.client,
+          topic: topic,
+          nonce,
+          fee,
+          identifier,
+          meta
+        })
+      } catch (e) {
+        if (e.message && e.message.includes('DuplicateSubscription')) {
+          isNewSubscription = false
+        } else {
+          throw e
+        }
+      }
+
+      // 2. Sync topic and subscribers
+      await this.syncTopicSubscribers(topic)
+
+      // 3. Send topicSubscribe message if it's a new subscription
+      if (isNewSubscription) {
+        const payload = MessageService.createTopicSubscribePayload(topic)
+        const dest = await this.getTopicSubscribersFromDb(topic)
+        await this.send(dest, payload)
+      }
+    } catch (e) {
+      logger.error('Failed to subscribe topic:', e)
+      throw e
+    }
+  }
 
   async unsubscribeTopic(
-    topicId: string,
+    topic: string,
     {
       nonce,
       fee,
       identifier,
       meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
-  ): Promise<void> {}
+    }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}
+  ): Promise<void> {
+    try {
+      // 1. Unsubscribe from the topic
+      await SubscribeService.unsubscribe({
+        client: this.client,
+        topic: topic,
+        nonce,
+        fee,
+        identifier
+      })
+
+      // 2. Update topic and subscribers in database
+      const topicDb = new TopicDb(this.db)
+      const subscriberDb = new SubscriberDb(this.db)
+
+      // Update topic status
+      const existingTopic = await topicDb.getByTopic(topic)
+      if (existingTopic) {
+        existingTopic.joined = 0
+        existingTopic.count = existingTopic.count - 1
+        await topicDb.put(existingTopic)
+      }
+
+      // Remove current user's subscriber record
+      await subscriberDb.deleteByTopicAndContact(topic, this.getDeviceId())
+
+      // 3. Send topicUnsubscribe message to other subscribers
+      const payload = MessageService.createTopicUnsubscribePayload(topic)
+      const dest = await this.getTopicSubscribersFromDb(topic)
+      await this.send(dest, payload)
+    } catch (e) {
+      logger.error('Failed to unsubscribe topic:', e)
+      throw e
+    }
+  }
+
+  private async syncTopicSubscribers(topic: string): Promise<void> {
+    // Get all subscribers from NKN chain
+    const subscribers = await this.getTopicSubscribers(topic)
+
+    // Get current block height for subscription expiry
+    const blockHeight = await this.getBlockHeight()
+    const expireHeight = blockHeight + blockHeightTopicSubscribeDefault
+
+    // Update topic in database
+    const topicDb = new TopicDb(this.db)
+    const existingTopic = await topicDb.getByTopic(topic)
+    const topicSchema = new TopicSchema({
+      id: existingTopic?.id,
+      topic: topic,
+      joined: true,
+      subscribeAt: Date.now(),
+      expireHeight: expireHeight,
+      count: subscribers.length,
+      options: existingTopic?.options ? JSON.parse(existingTopic.options) : {}
+    })
+
+    await topicDb.put(topicSchema.toDbModel())
+
+    // Update subscribers in database
+    const subscriberDb = new SubscriberDb(this.db)
+
+    // Get existing subscribers from database
+    const existingSubscribers = await subscriberDb.getByTopic(topic)
+
+    // Create a map of existing subscribers for quick lookup
+    const existingSubscriberMap = new Map(
+      existingSubscribers.map((sub) => [sub.contact_address, sub])
+    )
+
+    // Process each subscriber
+    for (const subscriberAddress of subscribers) {
+      const subscriber = new SubscriberSchema({
+        topic: topic,
+        contactAddress: subscriberAddress,
+        status: SubscriberStatus.Subscribed,
+        createdAt: Date.now()
+      })
+
+      const existingSubscriber = existingSubscriberMap.get(subscriberAddress)
+      if (existingSubscriber) {
+        // Update existing subscriber
+        subscriber.id = existingSubscriber.id
+        subscriber.updatedAt = Date.now()
+        await subscriberDb.update(subscriber.toDbModel())
+      } else {
+        // Insert new subscriber
+        await subscriberDb.insert(subscriber.toDbModel())
+      }
+    }
+
+    // Remove subscribers that are no longer active
+    for (const existingSubscriber of existingSubscribers) {
+      if (!subscribers.includes(existingSubscriber.contact_address)) {
+        await subscriberDb.delete(existingSubscriber.id)
+      }
+    }
+  }
+
+  async getTopicSubscribersFromDb(topic: string): Promise<string[]> {
+    try {
+      const subscriberDb = new SubscriberDb(this.db)
+      const subscribers = await subscriberDb.getByTopic(topic)
+      return subscribers.map((sub) => sub.contact_address)
+    } catch (e) {
+      logger.error('Failed to get topic subscribers from database:', e)
+      return []
+    }
+  }
 }

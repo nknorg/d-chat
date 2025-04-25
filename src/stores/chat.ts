@@ -22,10 +22,12 @@ export const useChatStore = defineStore(STORE_NAME, {
       await application.service.call(ServiceType.dchat, 'setCurrentChatTargetId', targetId)
       this.currentTargetId = targetId
     },
-    async subscribe(
+    async subscribeTopic(
       topic: string
     ) {
-      // await window.ipc.invoke(CHANNEL, INSTANCE, 'subscribe', topic, { identifier, fee, meta })
+      this.currentTargetId = topic
+      this.currentTargetType = SessionType.TOPIC
+      await application.service.call(ServiceType.dchat, 'subscribeTopic', topic)
     },
     async sendText(type: SessionType = SessionType.CONTACT, to: string, msg: string) {
       application.service.call(ServiceType.dchat, 'sendText', type, to, msg)

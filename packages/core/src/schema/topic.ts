@@ -12,7 +12,7 @@ export interface ITopicSchema {
   id?: number
   createdAt?: number
   updatedAt?: number
-  topicId: string
+  topic: string
   joined: boolean
   subscribeAt?: number
   expireHeight?: number
@@ -26,7 +26,7 @@ export class TopicSchema implements ITopicSchema {
   public id?: number
   public createdAt?: number
   public updatedAt?: number
-  public topicId: string
+  public topic: string
   public joined: boolean
   public subscribeAt?: number
   public expireHeight?: number
@@ -39,7 +39,7 @@ export class TopicSchema implements ITopicSchema {
     this.id = schema.id
     this.createdAt = schema.createdAt
     this.updatedAt = schema.updatedAt
-    this.topicId = schema.topicId
+    this.topic = schema.topic
     this.joined = schema.joined
     this.subscribeAt = schema.subscribeAt
     this.expireHeight = schema.expireHeight
@@ -62,7 +62,7 @@ export class TopicSchema implements ITopicSchema {
       id: this.id,
       created_at: this.createdAt,
       updated_at: this.updatedAt,
-      topic_id: this.topicId,
+      topic: this.topic,
       joined: this.joined ? 1 : 0,
       subscribe_at: this.subscribeAt,
       expire_height: this.expireHeight,
@@ -78,7 +78,7 @@ export class TopicSchema implements ITopicSchema {
       id: model.id,
       createdAt: model.created_at,
       updatedAt: model.updated_at,
-      topicId: model.topic_id,
+      topic: model.topic,
       joined: model.joined === 1,
       subscribeAt: model.subscribe_at,
       expireHeight: model.expire_height,

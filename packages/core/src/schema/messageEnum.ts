@@ -13,7 +13,8 @@ export enum MessageContentType {
 
   topicSubscribe = 'event:subscribe',
   topicUnsubscribe = 'event:unsubscribe',
-  topicInvitation = 'event:channelInvitation',
+
+  topicInvitation = 'topic:invitation',
 
   privateGroupInvitation = 'privateGroup:invitation',
   privateGroupSubscribe = 'privateGroup:subscribe',
