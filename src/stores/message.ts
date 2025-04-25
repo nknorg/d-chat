@@ -28,7 +28,7 @@ export const useMessageStore = defineStore(STORE_NAME, {
     ) {
       const records = await application.service.call(ServiceType.dchat, 'getHistoryMessages', targetId, targetType, options)
       if (records && records.length > 0) {
-        this.messageList = new Set([...this.messageList, ...records])
+        this.messageList = [...new Set([...this.messageList, ...records])]
       }
       return records
     }

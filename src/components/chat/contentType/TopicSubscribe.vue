@@ -1,9 +1,9 @@
 <template>
   <v-chip label color="info">
     <!--TODO: use contact info-->
-    <a href="#" class="mr-2">
-      {{ props.message.sender }}
-    </a>
+    <router-link to="" class="mr-2">
+      {{ props.message.sender.substring(0, 6) }}
+    </router-link>
     {{ $t('joined_channel') }}
   </v-chip>
 </template>
