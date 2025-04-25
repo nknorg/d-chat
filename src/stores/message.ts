@@ -18,18 +18,18 @@ export const useMessageStore = defineStore(STORE_NAME, {
     async getHistoryMessages(
       targetId: string,
       targetType: SessionType,
-      limit: number = 20,
-      offset: number = 0
+      options: {
+        offset?: number
+        limit?: number
+      } = {
+        offset: 0,
+        limit: 20
+      }
     ) {
-      const records = await application.service.call(
-        ServiceType.dchat,
-        'getHistoryMessages',
-        targetId,
-        targetType,
-        limit,
-        offset
-      )
-      this.messageList = records
+      const records = await application.service.call(ServiceType.dchat, 'getHistoryMessages', targetId, targetType, options)
+      if (records && records.length > 0) {
+        this.messageList = new Set([...this.messageList, ...records])
+      }
       return records
     }
   }

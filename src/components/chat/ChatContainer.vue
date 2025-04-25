@@ -38,13 +38,11 @@
 <script setup lang="ts">
 import { useChatStore } from '@/stores/chat'
 import { useMessageStore } from '@/stores/message'
-import { useSessionStore } from '@/stores/session'
 import { IMessageSchema, SessionType } from '@d-chat/core'
-import { defineProps, nextTick, reactive, watch, ref, onMounted, onUnmounted, ComponentPublicInstance } from 'vue'
+import { ComponentPublicInstance, defineProps, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import SvgIcon from '../SvgIcon.vue'
 import MessageItem from './MessageItem.vue'
 
-const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const messageStore = useMessageStore()
 
@@ -57,10 +55,16 @@ const state = reactive<{
   messages: IMessageSchema[]
   message: string
   showScrollToBottom: boolean
+  isLoadingMore: boolean
+  messageCount: number
+  hasReachedEarliest: boolean
 }>({
   messages: [],
   message: '',
-  showScrollToBottom: false
+  showScrollToBottom: false,
+  isLoadingMore: false,
+  messageCount: 20,
+  hasReachedEarliest: false
 })
 
 const messageContainer = ref<ComponentPublicInstance | null>(null)
@@ -68,7 +72,12 @@ const messageContainer = ref<ComponentPublicInstance | null>(null)
 function checkScroll() {
   if (!messageContainer.value) return
   const container = messageContainer.value.$el as HTMLElement
-  const { scrollTop } = container
+  const { scrollTop, scrollHeight, clientHeight } = container
+
+  if (scrollTop <= -scrollHeight + clientHeight + 50 && !state.isLoadingMore) {
+    loadMoreMessages()
+  }
+
   state.showScrollToBottom = scrollTop < -100
 }
 
@@ -81,44 +90,48 @@ function scrollToBottom() {
   })
 }
 
-onMounted(() => {
+function bindScrollEvent() {
   if (messageContainer.value) {
     const container = messageContainer.value.$el as HTMLElement
     container.addEventListener('scroll', checkScroll)
   }
-})
+}
 
-onUnmounted(() => {
+function unbindScrollEvent() {
   if (messageContainer.value) {
     const container = messageContainer.value.$el as HTMLElement
     container.removeEventListener('scroll', checkScroll)
   }
+}
+
+onMounted(() => {
+  bindScrollEvent()
+})
+
+onUnmounted(() => {
+  unbindScrollEvent()
 })
 
 watch(
-  () => messageStore.messageList,
-  () => {
+  () => props.targetId,
+  (targetId, prevTargetId) => {
+    unbindScrollEvent()
+    init()
     nextTick(() => {
-      scrollToBottom()
-      state.showScrollToBottom = false
+      bindScrollEvent()
     })
-  },
-  { deep: true }
+  }
 )
 
 async function init() {
   if (props.targetId == null || props.targetType == null) return
 
   await chatStore.setCurrentChatTargetId(props.targetId)
-  state.messages = await messageStore.getHistoryMessages(props.targetId, props.targetType)
+  state.messageCount = 20
+  state.hasReachedEarliest = false
+  messageStore.messageList = []
+  state.messages = await messageStore.getHistoryMessages(props.targetId, props.targetType, { offset: 0, limit: 20 })
 }
-
-watch(
-  () => props.targetId,
-  (targetId, prevTargetId) => {
-    init()
-  }
-)
 
 async function send() {
   let msg = state.message
@@ -150,6 +163,21 @@ async function sendImage() {
   // const filePath = await dialogStore.openFile()
   // if (filePath == null) return
   // await chatStore.sendImage(props.type, props.targetId, filePath)
+}
+
+async function loadMoreMessages() {
+  if (state.isLoadingMore || !props.targetId || !props.targetType || state.hasReachedEarliest) return
+  state.isLoadingMore = true
+  try {
+    const newMessages = await messageStore.getHistoryMessages(props.targetId, props.targetType, { offset: state.messageCount, limit: 20 })
+    if (newMessages.length > 0) {
+      state.messageCount += newMessages.length
+    } else {
+      state.hasReachedEarliest = true
+    }
+  } finally {
+    state.isLoadingMore = false
+  }
 }
 </script>
 <style lang="scss">

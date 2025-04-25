@@ -267,9 +267,7 @@ export class Dchat implements ChatProtocol {
   }
 
   async sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema> {
-    const payload = new PayloadSchema(
-      MessageService.createTextPayload(msg, { deviceId: this._deviceId })
-    )
+    const payload = new PayloadSchema(MessageService.createTextPayload(msg, { deviceId: this._deviceId }))
     if (type == SessionType.TOPIC) {
       payload.topic = to
     } else if (type == SessionType.PRIVATE_GROUP) {
@@ -343,10 +341,7 @@ export class Dchat implements ChatProtocol {
     return null
   }
 
-  async getSessionByTargetId(
-    targetId: string,
-    targetType: SessionType = SessionType.CONTACT
-  ): Promise<SessionSchema | null> {
+  async getSessionByTargetId(targetId: string, targetType: SessionType = SessionType.CONTACT): Promise<SessionSchema | null> {
     try {
       const sessionDb = new SessionDb(this.db)
       const record = await sessionDb.query(targetId, targetType)
@@ -362,12 +357,17 @@ export class Dchat implements ChatProtocol {
   async getHistoryMessages(
     targetId: string,
     targetType: SessionType,
-    limit: number = 20,
-    skip: number = 0
+    options: {
+      offset?: number
+      limit?: number
+    } = {
+      offset: 0,
+      limit: 20
+    }
   ): Promise<MessageSchema[]> {
     try {
       const messageDb = new MessageDb(this.db)
-      const list = await messageDb.getHistoryMessages(targetId, targetType, limit, skip)
+      const list = await messageDb.getHistoryMessages(targetId, targetType, options)
       if (list) {
         return list.map((item) => MessageSchema.fromDbModel(item))
       }
@@ -436,15 +436,7 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async subscribeTopic(
-    topic: string,
-    {
-      nonce,
-      fee,
-      identifier,
-      meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}
-  ): Promise<void> {
+  async subscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
       let isNewSubscription = true
       try {
@@ -480,15 +472,7 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async unsubscribeTopic(
-    topic: string,
-    {
-      nonce,
-      fee,
-      identifier,
-      meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}
-  ): Promise<void> {
+  async unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
       // 1. Unsubscribe from the topic
       await SubscribeService.unsubscribe({
@@ -512,7 +496,7 @@ export class Dchat implements ChatProtocol {
       }
 
       // Remove current user's subscriber record
-      await subscriberDb.deleteByTopicAndContact(topic, this.getDeviceId())
+      await subscriberDb.deleteByTopicAndContactAddress(topic, this.client.addr)
 
       // 3. Send topicUnsubscribe message to other subscribers
       const payload = MessageService.createTopicUnsubscribePayload(topic)
@@ -554,9 +538,7 @@ export class Dchat implements ChatProtocol {
     const existingSubscribers = await subscriberDb.getByTopic(topic)
 
     // Create a map of existing subscribers for quick lookup
-    const existingSubscriberMap = new Map(
-      existingSubscribers.map((sub) => [sub.contact_address, sub])
-    )
+    const existingSubscriberMap = new Map(existingSubscribers.map((sub) => [sub.contact_address, sub]))
 
     // Process each subscriber
     for (const subscriberAddress of subscribers) {

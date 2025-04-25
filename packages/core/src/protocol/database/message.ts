@@ -40,16 +40,18 @@ export interface IMessageDb {
       isOutbound?: boolean
       status?: number
       isDelete?: boolean
-      limit?: number
       offset?: number
+      limit?: number
     }
   ): Promise<MessageDbModel[]>
 
   getHistoryMessages(
     targetId: string,
     targetType: SessionType,
-    limit?: number,
-    skip?: number
+    options: {
+      offset?: number
+      limit?: number
+    }
   ): Promise<MessageDbModel[]>
 
   updateStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void>
@@ -97,8 +99,8 @@ export class MessageDb implements IMessageDb {
       isOutbound?: boolean
       status?: number
       isDelete?: boolean
-      limit?: number
       offset?: number
+      limit?: number
     }
   ): Promise<MessageDbModel[]> {
     let query = this.db
@@ -116,12 +118,12 @@ export class MessageDb implements IMessageDb {
       query = query.and((item) => item.status === options.status)
     }
 
-    if (options.limit !== undefined) {
-      query = query.limit(options.limit)
-    }
-
     if (options.offset !== undefined) {
       query = query.offset(options.offset)
+    }
+
+    if (options.limit !== undefined) {
+      query = query.limit(options.limit)
     }
 
     return query.toArray()
@@ -135,25 +137,26 @@ export class MessageDb implements IMessageDb {
   async getHistoryMessages(
     targetId: string,
     targetType: SessionType,
-    limit: number = 20,
-    skip: number = 0
+    options: {
+      offset?: number
+      limit?: number
+    } = {
+      offset: 0,
+      limit: 20
+    }
   ): Promise<MessageDbModel[]> {
     const query = this.db
       .table(MessageDb.tableName)
       .where('[target_id+target_type+is_delete+sent_at]')
-      .between([targetId, targetType, 0, Dexie.minKey], [targetId, targetType, 0, Dexie.maxKey])
+      .between([targetId, targetType, 0, Dexie.minKey], [targetId, targetType, 0, Dexie.maxKey], true, true)
       .reverse()
-      .limit(limit)
-      .offset(skip)
+      .offset(options.offset)
+      .limit(options.limit)
 
     return query.toArray()
   }
 
-  async updateStatusByTargetId(
-    targetId: string,
-    targetType: SessionType,
-    status: number
-  ): Promise<void> {
+  async updateStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void> {
     try {
       await this.db
         .table(MessageDb.tableName)

@@ -32,6 +32,7 @@ export const useSessionStore = defineStore(STORE_NAME, {
       for (let i = 0; i < this.sessionList.length; i++) {
         if (this.sessionList[i].targetId == data.targetId) {
           this.sessionList[i] = data
+          this.sessionList.sort((a, b) => b.lastMessageAt - a.lastMessageAt)
           return
         }
       }

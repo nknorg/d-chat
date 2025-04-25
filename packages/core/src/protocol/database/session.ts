@@ -86,12 +86,12 @@ export class SessionDb implements ISessionDb {
         .orderBy(['is_top', 'last_message_at'])
         .reverse()
 
-      if (limit !== undefined) {
-        query = query.limit(limit)
-      }
-
       if (offset !== undefined) {
         query = query.offset(offset)
+      }
+
+      if (limit !== undefined) {
+        query = query.limit(limit)
       }
 
       return query.toArray()

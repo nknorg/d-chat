@@ -30,8 +30,10 @@ export interface ChatProtocol {
   getHistoryMessages(
     targetId: string,
     targetType: SessionType,
-    limit?: number,
-    skip?: number
+    options: {
+      offset?: number
+      limit?: number
+    }
   ): Promise<MessageSchema[]>
 
   readAllMessagesByTargetId(targetId: string, targetType: SessionType): Promise<void>
@@ -41,25 +43,9 @@ export interface ChatProtocol {
 
   getNonce(): Promise<number>
 
-  subscribeTopic(
-    topic: string,
-    {
-      nonce,
-      fee,
-      identifier,
-      meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
-  ): Promise<void>
+  subscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string }): Promise<void>
 
-  unsubscribeTopic(
-    topic: string,
-    {
-      nonce,
-      fee,
-      identifier,
-      meta
-    }: { nonce?: number; fee?: number; identifier?: string; meta?: string }
-  ): Promise<void>
+  unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string }): Promise<void>
 
   getTopicSubscribers(topic: string): Promise<string[]>
 
