@@ -17,6 +17,7 @@ import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
 import { TopicDb } from '../database/topic'
+import { ClientNotReadyError } from '../error/ClientNotReadyError'
 import { MessageService } from './messageService'
 import { blockHeightTopicSubscribeDefault, SubscribeService } from './subscribeService'
 
@@ -258,6 +259,9 @@ export class Dchat implements ChatProtocol {
 
   async send(dest: string[] | string, payload: IPayloadSchema): Promise<void> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       await this.client.send(dest, JSON.stringify(payload), {
         ...this.sendOptions
       })
@@ -267,6 +271,9 @@ export class Dchat implements ChatProtocol {
   }
 
   async sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema> {
+    if (!this.client?.isReady) {
+      throw new ClientNotReadyError()
+    }
     const payload = new PayloadSchema(MessageService.createTextPayload(msg, { deviceId: this._deviceId }))
     if (type == SessionType.TOPIC) {
       payload.topic = to
@@ -394,6 +401,9 @@ export class Dchat implements ChatProtocol {
 
   async getBlockHeight(): Promise<number> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       const block = await this.client.getLatestBlock()
       return block.height
     } catch (e) {
@@ -404,6 +414,9 @@ export class Dchat implements ChatProtocol {
 
   async getNonce(): Promise<number> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       const nonce = await this.client.getNonce(this.client.addr, { txPool: true })
       return nonce
     } catch (e) {
@@ -414,6 +427,9 @@ export class Dchat implements ChatProtocol {
 
   async getTopicSubscribers(topic: string): Promise<string[]> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       return await SubscribeService.getSubscribers({
         client: this.client,
         topic: topic
@@ -426,6 +442,9 @@ export class Dchat implements ChatProtocol {
 
   async getTopicSubscribersCount(topic: string): Promise<number> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       return await SubscribeService.getSubscribersCount({
         client: this.client,
         topic: topic
@@ -438,6 +457,9 @@ export class Dchat implements ChatProtocol {
 
   async subscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       let isNewSubscription = true
       try {
         // 1. Subscribe to the topic
@@ -475,6 +497,9 @@ export class Dchat implements ChatProtocol {
 
   async unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
+      if (!this.client?.isReady) {
+        throw new ClientNotReadyError()
+      }
       // 1. Unsubscribe from the topic
       await SubscribeService.unsubscribe({
         client: this.client,

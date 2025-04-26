@@ -1,7 +1,7 @@
 <template>
   <v-layout v-if="props.targetId" class="fill-height justify-start align-start flex-column">
     <v-container ref="messageContainer" class="fill-height justify-start align-start flex-column-reverse flex-grow-0 overflow-y-auto message-container">
-      <MessageItem v-for="msg in messageStore.messageList" :key="msg.payload.id" :message="msg" class="mb-2" />
+      <MessageItem v-for="msg in messageStore.messageList" :key="msg.payload.id" :message="msg" class="mb-2 mt-2" />
     </v-container>
     <v-fab
       class="scroll-to-bottom-btn"

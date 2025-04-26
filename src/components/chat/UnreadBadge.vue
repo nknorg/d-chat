@@ -12,6 +12,7 @@
       </transition>
     </template>
   </v-badge>
+  <span v-else></span>
 </template>
 <script setup lang="ts">
 import { defineProps } from 'vue'

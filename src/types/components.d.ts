@@ -24,6 +24,8 @@ declare module 'vue' {
     NewPublicGroupDialog: typeof import('./../components/dialog/NewPublicGroupDialog.vue')['default']
     NewTabBtn: typeof import('./../components/button/NewTabBtn.vue')['default']
     NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
+    Notivue: typeof import('./../components/notification/Notivue.vue')['default']
+    NotivueTemplate: typeof import('./../components/notification/NotivueTemplate.vue')['default']
     RefreshBtn: typeof import('./../components/button/RefreshBtn.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

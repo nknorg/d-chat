@@ -28,18 +28,12 @@ export class SubscribeService {
     const topicId = await genChannelId(topic)
     let result: TxnOrHash
     try {
-      result = await client.subscribe(
-        topicId,
-        duration ?? blockHeightTopicSubscribeDefault,
-        identifier,
-        meta,
-        {
-          fee: fee?.toFixed(8),
-          attrs: '',
-          buildOnly: false,
-          nonce
-        }
-      )
+      result = await client.subscribe(topicId, duration ?? blockHeightTopicSubscribeDefault, identifier, meta, {
+        fee: fee?.toFixed(8),
+        attrs: '',
+        buildOnly: false,
+        nonce
+      })
       return result as string
     } catch (e) {
       logger.error(e)
@@ -47,19 +41,7 @@ export class SubscribeService {
     }
   }
 
-  static async unsubscribe({
-    client,
-    topic,
-    nonce,
-    fee,
-    identifier
-  }: {
-    client: MultiClient
-    topic: string
-    nonce?: number
-    fee?: number
-    identifier?: string
-  }): Promise<string> {
+  static async unsubscribe({ client, topic, nonce, fee, identifier }: { client: MultiClient; topic: string; nonce?: number; fee?: number; identifier?: string }): Promise<string> {
     const topicId = await genChannelId(topic)
     try {
       const result = await client.unsubscribe(topicId, identifier, {
@@ -75,15 +57,7 @@ export class SubscribeService {
     }
   }
 
-  static async getSubscription({
-    client,
-    topic,
-    subscriber
-  }: {
-    client: MultiClient
-    topic: string
-    subscriber: string
-  }): Promise<{
+  static async getSubscription({ client, topic, subscriber }: { client: MultiClient; topic: string; subscriber: string }): Promise<{
     meta: string
     expiresAt: number
   }> {
@@ -131,19 +105,13 @@ export class SubscribeService {
           mergerdSubscribers = Object.keys(subscribers.subscribers || {})
           if (txPool) {
             if (subscribers.subscribersInTxPool) {
-              mergerdSubscribers = [
-                ...mergerdSubscribers,
-                ...Object.keys(subscribers.subscribersInTxPool || {})
-              ]
+              mergerdSubscribers = [...mergerdSubscribers, ...Object.keys(subscribers.subscribersInTxPool || {})]
             }
           }
         } else {
           mergerdSubscribers = [...(<Array<string>>subscribers.subscribers)]
           if (txPool) {
-            mergerdSubscribers = [
-              ...mergerdSubscribers,
-              ...(<Array<string>>subscribers.subscribersInTxPool)
-            ]
+            mergerdSubscribers = [...mergerdSubscribers, ...(<Array<string>>subscribers.subscribersInTxPool)]
           }
         }
 
@@ -166,13 +134,7 @@ export class SubscribeService {
     }
   }
 
-  static async getSubscribersCount({
-    client,
-    topic
-  }: {
-    client: MultiClient
-    topic: string
-  }): Promise<number> {
+  static async getSubscribersCount({ client, topic }: { client: MultiClient; topic: string }): Promise<number> {
     const topicId = await genChannelId(topic)
     try {
       const count = await client.getSubscribersCount(topicId)

@@ -20,9 +20,20 @@
       </v-list-item-subtitle>
     </template>
     <template #append>
-      <v-layout class="flex-column justify-center align-end" style="height: 50px">
-        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
+      <v-layout class="flex-column justify-space-around align-end" style="height: 50px">
         <UnreadBadge :count="item.unReadCount" />
+        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
+      </v-layout>
+      <v-layout class="flex-column justify-space-between align-end" style="height: 50px">
+        <v-chip color="blue" density="comfortable" size="small" variant="tonal" link @click.stop="null">
+          <template #prepend>
+            <Icon icon="material-symbols:groups-2-rounded" class="mr-1"></Icon>
+          </template>
+          <template #append>
+            <span class="body-small">99</span>
+          </template>
+        </v-chip>
+        <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
       </v-layout>
     </template>
   </v-list-item>
@@ -34,6 +45,7 @@ import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
 import { formatChatTime } from '@/utils/format'
 import { SessionSchema } from '@d-chat/core'
+import { Icon } from '@iconify/vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()

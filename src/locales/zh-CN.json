@@ -35,6 +35,8 @@
   "click_connect": "点击连接",
   "click_to_change": "点击更改",
   "click_to_settings": "点击设置",
+  "connect_not_ready": "连接未准备好",
+  "connect_not_ready_message": "请稍后再试。",
   "you": "您",
   "owner": "群主",
   "seconds": "秒",

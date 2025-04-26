@@ -39,8 +39,9 @@
 <script setup lang="ts">
 import { Validator } from '@/helpers/validator'
 import { useChatStore } from '@/stores/chat'
+import { useNotificationStore } from '@/stores/notification'
 import { useSessionStore } from '@/stores/session'
-import { SessionSchema, SessionType } from '@d-chat/core'
+import { logger, SessionSchema, SessionType } from '@d-chat/core'
 import { reactive } from 'vue'
 
 const chatStore = useChatStore()
@@ -56,6 +57,16 @@ const state = reactive({
 async function submit(event) {
   const results = await event
   if (results.valid) {
+    state.loading = true
+    try {
+      await chatStore.subscribeTopic(state.sendTo)
+    } catch (e) {
+      state.loading = false
+      state.dialog = false
+      return
+    }
+    state.loading = false
+
     if (!sessionStore.sessionList.find((session) => session.targetId === state.sendTo)) {
       sessionStore.sessionList.unshift(
         new SessionSchema({
@@ -68,9 +79,6 @@ async function submit(event) {
         })
       )
     }
-    state.loading = true
-    await chatStore.subscribeTopic(state.sendTo)
-    state.loading = false
 
     state.dialog = false
   }

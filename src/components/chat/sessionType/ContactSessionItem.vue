@@ -1,8 +1,5 @@
 <template>
-  <v-list-item
-    :active="chatStore.currentTargetId == props.item.targetId"
-    @click="selectedSession(item)"
-  >
+  <v-list-item :active="chatStore.currentTargetId == props.item.targetId" @click="selectedSession(item)">
     <template #prepend>
       <v-avatar color="primary">
         <!--TODO: use contact info -->
@@ -16,9 +13,13 @@
       </v-list-item-subtitle>
     </template>
     <template #append>
-      <v-layout class="flex-column justify-center align-end" style="height: 50px">
-        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
+      <v-layout class="flex-column justify-space-around align-end" style="height: 50px">
         <UnreadBadge :count="item.unReadCount" />
+        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
+      </v-layout>
+      <v-layout class="flex-column justify-space-between align-center" style="height: 50px">
+        <span></span>
+        <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
       </v-layout>
     </template>
   </v-list-item>
@@ -30,6 +31,7 @@ import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
 import { formatChatTime } from '@/utils/format'
 import { SessionSchema } from '@d-chat/core'
+import { Icon } from '@iconify/vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()

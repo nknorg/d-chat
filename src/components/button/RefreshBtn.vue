@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+
 function refresh() {
   window.location.reload()
 }

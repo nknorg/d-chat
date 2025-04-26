@@ -3,8 +3,9 @@
     <app-bar />
     <SideBar />
     <default-view />
-    <Footer app />
+    <Footer app style="z-index: 100" />
   </v-app>
+  <NotivueTemplate />
 </template>
 
 <script lang="ts" setup>
