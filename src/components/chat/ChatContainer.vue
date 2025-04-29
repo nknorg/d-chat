@@ -37,6 +37,7 @@
 </template>
 <script setup lang="ts">
 import { useChatStore } from '@/stores/chat'
+import { useContactStore } from '@/stores/contact'
 import { useMessageStore } from '@/stores/message'
 import { IMessageSchema, SessionType } from '@d-chat/core'
 import { ComponentPublicInstance, defineProps, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
@@ -45,6 +46,7 @@ import MessageItem from './MessageItem.vue'
 
 const chatStore = useChatStore()
 const messageStore = useMessageStore()
+const contactStore = useContactStore()
 
 const props = defineProps<{
   targetId?: string
@@ -127,6 +129,9 @@ async function init() {
   if (props.targetId == null || props.targetType == null) return
 
   await chatStore.setCurrentChatTargetId(props.targetId)
+
+  contactStore.queryContactInfo({ type: props.targetType, address: props.targetId })
+
   state.messageCount = 20
   state.hasReachedEarliest = false
   messageStore.messageList = []

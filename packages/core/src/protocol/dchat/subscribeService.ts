@@ -1,8 +1,6 @@
 import { MultiClient, TxnOrHash } from 'nkn-sdk'
 import { genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
-import { NknError } from '../error/nknError.ts'
-import { log } from 'console'
 
 export const blockHeightTopicSubscribeDefault = 400000 // 93day
 export const blockHeightTopicWarnBlockExpire = 100000 // 23day

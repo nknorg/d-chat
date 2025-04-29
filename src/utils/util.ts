@@ -1,19 +1,28 @@
-export function bytesToHex(bytes: Uint8Array): string {
-  return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
-}
+export async function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard && window.isSecureContext) {
+    // For secure contexts (HTTPS)
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
+  } else {
+    // Fallback for non-secure contexts
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.left = '-999999px'
+    textArea.style.top = '-999999px'
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
 
-const hexRe = /^[0-9a-f]+$/i
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
 
-export function hexToBytes(hex) {
-  if (hex.length % 2 === 1) {
-    throw new RangeError('invalid hex string length ' + hex.length)
+    document.body.removeChild(textArea)
   }
-  if (!hexRe.test(hex)) {
-    throw new RangeError('invalid hex string')
-  }
-  let bytes: number[] = []
-  for (let c = 0; c < hex.length; c += 2) {
-    bytes.push(parseInt(hex.substring(c, c+2), 16))
-  }
-  return new Uint8Array(bytes)
 }

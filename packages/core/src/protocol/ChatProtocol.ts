@@ -1,8 +1,11 @@
-import { ContactSchema } from '../schema/contact.ts'
+import { CacheSchema } from '../schema/cache'
+import { ContactSchema, IContactSchema } from '../schema/contact'
+import { ContactType } from '../schema/contactEnum'
 import { MessageSchema } from '../schema/message'
 import { IPayloadSchema } from '../schema/payload'
 import { SessionSchema } from '../schema/session'
 import { SessionType } from '../schema/sessionEnum'
+import { TopicSchema } from '../schema/topic'
 
 export type AddMessageHandler = (message: MessageSchema) => void
 export type UpdateSessionHandler = (session: SessionSchema) => void
@@ -54,6 +57,22 @@ export interface ChatProtocol {
 
   // Contact
   getContactList(): Promise<string[]>
+
   getContactByAddress(address: string): Promise<ContactSchema | null>
+
   requestContactData(address: string): Promise<void>
+
+  getOrCreateContact(address: string, { type }: { type?: ContactType }): Promise<ContactSchema | null>
+
+  updateContact(contact: Partial<IContactSchema>): Promise<void>
+
+  // Topic
+  getTopicInfo(topic: string): Promise<TopicSchema | null>
+
+  // Cache
+  setCache(key: string, value: string): Promise<string>
+
+  getCache(key: string): Promise<CacheSchema | undefined>
+
+  deleteCache(key: string): Promise<void>
 }

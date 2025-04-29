@@ -48,6 +48,8 @@ export interface ICacheDb {
   count(): Promise<number>
 
   getSize(): Promise<number>
+
+  getCacheByName(name: string): Promise<CacheDbModel | undefined>
 }
 
 export class CacheDb implements ICacheDb {
@@ -115,5 +117,13 @@ export class CacheDb implements ICacheDb {
   async getSize(): Promise<number> {
     const items = await this.db.table(CacheDb.tableName).toArray()
     return items.reduce((total, item) => total + item.size, 0)
+  }
+
+  async getCacheByName(name: string): Promise<CacheDbModel | undefined> {
+    return await this.db
+      .table(CacheDb.tableName)
+      .where('name')
+      .equals(name)
+      .first()
   }
 }

@@ -51,13 +51,11 @@
 </template>
 
 <script lang="ts" setup>
-import { Validator } from '@/common/validator'
 import { File } from '@/common/file'
+import { Validator } from '@/common/validator'
 import { useWalletStore } from '@/stores/wallet'
-import { getDefaultName, logger } from "@d-chat/core";
-import { push } from 'notivue'
-import { ComponentPublicInstance, getCurrentInstance, onBeforeMount, reactive } from 'vue'
 import { errors } from 'nkn-sdk'
+import { ComponentPublicInstance, getCurrentInstance, onBeforeMount, reactive } from 'vue'
 
 const ins = getCurrentInstance()
 const proxy: ComponentPublicInstance = ins!.proxy!

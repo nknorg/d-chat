@@ -1,5 +1,7 @@
 import Dexie from 'dexie'
 import { logger } from '../../utils/log'
+import { Wallet } from 'nkn-sdk'
+import { ContactType } from '../../schema/contactEnum'
 
 export interface ContactDbModel {
   id?: number
@@ -36,7 +38,7 @@ export class ContactDb implements IContactDb {
 
   async getContactByAddress(address: string): Promise<ContactDbModel | null> {
     try {
-      return await this.db.table(ContactDb.tableName).where('address').equals(address).first() || null
+      return (await this.db.table(ContactDb.tableName).where('address').equals(address).first()) || null
     } catch (e) {
       logger.error(e)
       return null
@@ -45,6 +47,18 @@ export class ContactDb implements IContactDb {
 
   async insert(model: ContactDbModel): Promise<void> {
     try {
+      const now = Date.now()
+      model.created_at = now
+      model.updated_at = now
+
+      if (model.wallet_address == null) {
+        model.wallet_address = Wallet.publicKeyToAddress(model.address)
+      }
+
+      if (model.type == null) {
+        model.type = ContactType.STRANGER
+      }
+
       await this.db.table(ContactDb.tableName).add(model)
     } catch (e) {
       logger.error(e)
@@ -54,7 +68,21 @@ export class ContactDb implements IContactDb {
 
   async update(model: ContactDbModel): Promise<void> {
     try {
-      await this.db.table(ContactDb.tableName).put(model)
+      model.updated_at = Date.now()
+      const existingModel = await this.db.table(ContactDb.tableName).get(model.id)
+      if (!existingModel) {
+        throw new Error('Contact not found')
+      }
+      
+      // Only update fields that are provided in the model
+      const updates: Partial<ContactDbModel> = {}
+      for (const key in model) {
+        if (model[key] !== undefined) {
+          updates[key] = model[key]
+        }
+      }
+      
+      await this.db.table(ContactDb.tableName).update(model.id, updates)
     } catch (e) {
       logger.error(e)
       throw e

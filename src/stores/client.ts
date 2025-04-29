@@ -1,6 +1,6 @@
 import { application } from '@/common/application'
 import { ServiceType } from '@/common/service'
-import { ConnectionStatus } from '@d-chat/core'
+import { ConnectionStatus, Db } from '@d-chat/core'
 import { Wallet } from 'nkn-sdk'
 import { defineStore } from 'pinia'
 
@@ -21,6 +21,10 @@ export const useClientStore = defineStore(STORE_NAME, {
       this.connectStatus = ConnectionStatus.Connecting
       const wallet = new Wallet({ seed })
       await application.service.call(ServiceType.Db, 'openDb', wallet.getPublicKey(), seed)
+      if (process.env.__APP_PLATFORM__ == 'webext') {
+        await Db.openDb(wallet.getPublicKey(), seed)
+      }
+
       application.service.call(ServiceType.dchat, 'init')
       this.lastSignInId = await application.service.call(ServiceType.Connect, 'connect', seed)
       return this.lastSignInId

@@ -19,6 +19,7 @@ export function hexToBytes(hex: string): Uint8Array {
 }
 
 const isNode = typeof process !== 'undefined' && !!process.versions?.node
+const isBrowser = typeof window !== 'undefined'
 
 export async function sha1(raw: string) {
   if (isNode) {
@@ -27,7 +28,7 @@ export async function sha1(raw: string) {
   } else {
     const encoder = new TextEncoder()
     const data = encoder.encode(raw)
-    const hashBuffer = await window.crypto.subtle.digest('SHA-1', data)
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data)
     return Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')

@@ -1,6 +1,6 @@
 import { Message, MultiClient } from 'nkn-sdk'
 import { Connect } from '../../chat/connect'
-import { ContactSchema } from '../../schema/contact'
+import { ContactSchema, IContactSchema } from '../../schema/contact'
 import { MessageSchema } from '../../schema/message'
 import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
 import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
@@ -19,7 +19,13 @@ import { SubscriberDb } from '../database/subscriber'
 import { TopicDb } from '../database/topic'
 import { ClientNotReadyError } from '../error/ClientNotReadyError'
 import { MessageService } from './messageService'
-import { blockHeightTopicSubscribeDefault, SubscribeService } from './subscribeService'
+import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
+import { ContactDb } from '../database/contact'
+import { ContactService } from './contactService'
+import { ContactType } from '../../schema/contactEnum'
+import { CacheDb, CacheDbModel, MediaType } from '../database/cache'
+import { CacheService } from './cacheService'
+import { CacheSchema } from '../../schema/cache'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -79,21 +85,61 @@ export class Dchat implements ChatProtocol {
       }
 
       // 2. Add new subscriber
-      const subscriber = new SubscriberSchema({
-        topic: topic,
-        contactAddress: src,
-        status: SubscriberStatus.Subscribed,
-        createdAt: Date.now()
-      })
-      await subscriberDb.insert(subscriber.toDbModel())
+      const record = await subscriberDb.getByTopicAndContactAddress(topic, src)
+      if (record) {
+        record.status = SubscriberStatus.Subscribed
+        await subscriberDb.put(record)
+      } else {
+        const subscriber = new SubscriberSchema({
+          topic: topic,
+          contactAddress: src,
+          status: SubscriberStatus.Subscribed,
+          createdAt: Date.now()
+        })
+        await subscriberDb.put(subscriber.toDbModel())
+      }
     } catch (e) {
       logger.error('Failed to handle topic subscribe message:', e)
     }
   }
 
+  async receiveTopicUnsubscribeMessage(src: string, topic: string) {
+    const topicDb = new TopicDb(this.db)
+    const subscriberDb = new SubscriberDb(this.db)
+
+    try {
+      // 1. Update topic subscriber count
+      const existingTopic = await topicDb.getByTopic(topic)
+      if (existingTopic) {
+        existingTopic.count = Math.max(0, existingTopic.count - 1)
+        await topicDb.put(existingTopic)
+      }
+
+      // 2. Remove subscriber
+      await subscriberDb.deleteByTopicAndContactAddress(topic, src)
+    } catch (e) {
+      logger.error('Failed to handle topic unsubscribe message:', e)
+    }
+  }
+
   async handleContact(message: MessageSchema) {}
 
-  async handleTopic(message: MessageSchema) {}
+  async handleTopic(message: MessageSchema) {
+    const topic = message.payload.topic
+    const sender = message.sender
+
+    // Check if topic needs to be synced
+    const shouldSync = await this.shouldSyncTopic(topic)
+
+    // Check if sender is in subscribers list
+    const subscriberDb = new SubscriberDb(this.db)
+    const existingSubscriber = await subscriberDb.getByTopicAndContactAddress(topic, sender)
+
+    // If topic needs sync or sender is not in subscribers list, sync the topic
+    if (shouldSync || !existingSubscriber) {
+      await this.syncTopicSubscribers(topic)
+    }
+  }
 
   async handleMessage(raw: Message) {
     if (raw.payloadType == PayloadType.TEXT) {
@@ -147,6 +193,10 @@ export class Dchat implements ChatProtocol {
         case MessageContentType.topicSubscribe:
           this.receiveTopicSubscribeMessage(raw.src, payload.topic)
           break
+        case MessageContentType.topicUnsubscribe:
+          this.receiveTopicUnsubscribeMessage(raw.src, payload.topic)
+          break
+
         default:
           logger.error('not support message type')
           return
@@ -618,5 +668,69 @@ export class Dchat implements ChatProtocol {
 
   async requestContactData(address: string): Promise<void> {
     return Promise.resolve(undefined)
+  }
+
+  async getOrCreateContact(address: string, { type }: { type?: ContactType }): Promise<ContactSchema | null> {
+    return ContactService.getOrCreateContact({ db: this.db, address, type })
+  }
+
+  async updateContact(contact: Partial<IContactSchema>): Promise<void> {
+    return ContactService.updateContact({ db: this.db, contact })
+  }
+
+  private async shouldSyncTopic(topic: string): Promise<boolean> {
+    const topicDb = new TopicDb(this.db)
+    const record = await topicDb.getByTopic(topic)
+
+    if (!record) return true
+
+    const blockHeight = await this.getBlockHeight()
+    return record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
+  }
+
+  // Topic
+  async getTopicInfo(topic: string): Promise<TopicSchema | null> {
+    try {
+      const topicDb = new TopicDb(this.db)
+      const record = await topicDb.getByTopic(topic)
+
+      // If client is not ready, return data from database
+      if (!this.client?.isReady) {
+        return record ? TopicSchema.fromDbModel(record) : null
+      }
+
+      // Check if topic data is missing or expired
+      const shouldSync = await this.shouldSyncTopic(topic)
+
+      if (shouldSync) {
+        // Sync topic data if missing or expired
+        await this.syncTopicSubscribers(topic)
+        // Get the updated record after sync
+        const updatedRecord = await topicDb.getByTopic(topic)
+        if (updatedRecord) {
+          return TopicSchema.fromDbModel(updatedRecord)
+        }
+      } else if (record) {
+        return TopicSchema.fromDbModel(record)
+      }
+
+      return null
+    } catch (e) {
+      logger.error('Failed to get topic info:', e)
+      return null
+    }
+  }
+
+  // Cache
+  async setCache(name: string, value: any): Promise<string> {
+    return await CacheService.setCache({ db: this.db, name, value })
+  }
+
+  async getCache(id: string): Promise<CacheSchema | undefined> {
+    return await CacheService.getCache({ db: this.db, id })
+  }
+
+  async deleteCache(id: string): Promise<void> {
+    return await CacheService.deleteCache({ db: this.db, id })
   }
 }

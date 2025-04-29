@@ -13,10 +13,18 @@ export interface SubscriberDbModel {
 
 export interface ISubscriberDb {
   insert(model: SubscriberDbModel): Promise<void>
+
   update(model: SubscriberDbModel): Promise<void>
+
+  put(model: SubscriberDbModel): Promise<void>
+
   getByTopic(topic: string): Promise<SubscriberDbModel[]>
+
   delete(id: number): Promise<void>
+
   deleteByTopicAndContactAddress(topic: string, contactAddress: string): Promise<void>
+
+  getByTopicAndContactAddress(topic: string, contactAddress: string): Promise<SubscriberDbModel | undefined>
 }
 
 export class SubscriberDb implements ISubscriberDb {
@@ -29,6 +37,12 @@ export class SubscriberDb implements ISubscriberDb {
 
   async insert(model: SubscriberDbModel): Promise<void> {
     try {
+      if (!model.topic || !model.contact_address) {
+        throw new Error('Topic and contact address are required')
+      }
+      const now = Date.now()
+      model.created_at = now
+      model.updated_at = now
       await this.db.table(SubscriberDb.tableName).add(model)
     } catch (e) {
       logger.error(e)
@@ -38,6 +52,24 @@ export class SubscriberDb implements ISubscriberDb {
 
   async update(model: SubscriberDbModel): Promise<void> {
     try {
+      await this.db.table(SubscriberDb.tableName).put(model)
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async put(model: SubscriberDbModel): Promise<void> {
+    try {
+      if (!model.topic || !model.contact_address) {
+        throw new Error('Topic and contact address are required')
+      }
+      const now = Date.now()
+      if (!model.created_at) {
+        model.created_at = now
+      }
+      model.updated_at = now
+
       await this.db.table(SubscriberDb.tableName).put(model)
     } catch (e) {
       logger.error(e)
@@ -65,10 +97,16 @@ export class SubscriberDb implements ISubscriberDb {
 
   async deleteByTopicAndContactAddress(topic: string, contactAddress: string): Promise<void> {
     try {
-      await this.db.table(SubscriberDb.tableName)
-        .where(['topic', 'contact_address'])
-        .equals([topic, contactAddress])
-        .delete()
+      await this.db.table(SubscriberDb.tableName).where(['topic', 'contact_address']).equals([topic, contactAddress]).delete()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getByTopicAndContactAddress(topic: string, contactAddress: string): Promise<SubscriberDbModel | undefined> {
+    try {
+      return await this.db.table(SubscriberDb.tableName).where(['topic', 'contact_address']).equals([topic, contactAddress]).first()
     } catch (e) {
       logger.error(e)
       throw e

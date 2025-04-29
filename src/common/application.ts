@@ -5,13 +5,14 @@ import { useCommonStore } from '@/stores/common'
 import { useWalletStore } from '@/stores/wallet'
 import { LightTheme } from '@/theme/light'
 import { SkinTheme } from '@/theme/theme'
-import { LocalStorage, StoreAdapter } from '@d-chat/core'
+import { Db, LocalStorage, StoreAdapter } from '@d-chat/core'
 import { ref } from 'vue'
 
 export class Application {
   public loading = ref(false)
   public theme: SkinTheme = new LightTheme()
   public service: IService = new Service()
+  public db: Db = Db
 
   async initialize(): Promise<void> {
     this.loading.value = true
@@ -25,6 +26,12 @@ export class Application {
       StoreAdapter.setRpcServerCache(new module.ChromeStorage('local'))
       const module2 = await import('../../web-extension/src/service')
       this.service = new module2.Service()
+
+      const walletStore = useWalletStore()
+      const wallet = await walletStore.getDefault()
+      if (wallet) {
+        await Db.openDb(wallet.publicKey, '')
+      }
     } else {
       import('./connectEvent')
       StoreAdapter.setRpcServerCache(new LocalStorage())

@@ -39,9 +39,8 @@
 <script setup lang="ts">
 import { Validator } from '@/helpers/validator'
 import { useChatStore } from '@/stores/chat'
-import { useNotificationStore } from '@/stores/notification'
 import { useSessionStore } from '@/stores/session'
-import { logger, SessionSchema, SessionType } from '@d-chat/core'
+import { SessionSchema, SessionType } from '@d-chat/core'
 import { reactive } from 'vue'
 
 const chatStore = useChatStore()

@@ -30,7 +30,7 @@
             <Icon icon="material-symbols:groups-2-rounded" class="mr-1"></Icon>
           </template>
           <template #append>
-            <span class="body-small">99</span>
+            <span class="body-small">{{ contactStore.contactInfoMap[key]?.data['count'] }}</span>
           </template>
         </v-chip>
         <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import UnreadBadge from '@/components/chat/UnreadBadge.vue'
 import { useChatStore } from '@/stores/chat'
+import { useContactStore } from '@/stores/contact'
 import { useSessionStore } from '@/stores/session'
 import { formatChatTime } from '@/utils/format'
 import { SessionSchema } from '@d-chat/core'
@@ -49,10 +50,14 @@ import { Icon } from '@iconify/vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()
+const contactStore = useContactStore()
 
 const props = defineProps<{
   item: SessionSchema
 }>()
+
+const key = `${props.item.targetType}-${props.item.targetId}`
+
 
 function selectedSession(s: SessionSchema) {
   chatStore.currentTargetId = s.targetId

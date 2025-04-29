@@ -13,7 +13,7 @@ export interface IContactSchema {
   createdAt?: number
   updatedAt?: number
   address: string
-  walletAddress: string
+  walletAddress?: string
   type: ContactType
   avatar?: string
   firstName?: string
@@ -29,7 +29,7 @@ export class ContactSchema implements IContactSchema {
   public createdAt?: number
   public updatedAt?: number
   public address: string
-  public walletAddress: string
+  public walletAddress?: string
   public type: ContactType
   public avatar?: string
   public firstName?: string
