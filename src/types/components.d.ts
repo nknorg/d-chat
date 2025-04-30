@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ChatContainer: typeof import('./../components/chat/ChatContainer.vue')['default']
     ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
+    ContactAvatar: typeof import('./../components/contact/ContactAvatar.vue')['default']
     ContactSessionItem: typeof import('./../components/chat/sessionType/ContactSessionItem.vue')['default']
     Footer: typeof import('./../components/Footer.vue')['default']
     ImageCropper: typeof import('./../components/dialog/ImageCropper.vue')['default']
@@ -39,6 +40,7 @@ declare module 'vue' {
     SwitchLanguageBtn: typeof import('./../components/button/SwitchLanguageBtn.vue')['default']
     SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
     TextMessage: typeof import('./../components/chat/contentType/TextMessage.vue')['default']
+    TopicAvatar: typeof import('./../components/contact/TopicAvatar.vue')['default']
     TopicSessionItem: typeof import('./../components/chat/sessionType/TopicSessionItem.vue')['default']
     TopicSubscribe: typeof import('./../components/chat/contentType/TopicSubscribe.vue')['default']
     TopicUnsubscribe: typeof import('./../components/chat/contentType/TopicUnsubscribe.vue')['default']

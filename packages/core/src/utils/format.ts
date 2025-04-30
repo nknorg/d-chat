@@ -9,9 +9,9 @@ export function getDefaultName(address: string): string {
 }
 
 export function ensureUrl(str: string): string {
-  const regex = /^(http:\/\/|https:\/\/)/;
+  const regex = /^(http:\/\/|https:\/\/)/
   if (!regex.test(str)) {
-    return 'http://' + str;
+    return 'http://' + str
   }
-  return str;
+  return str
 }

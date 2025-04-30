@@ -27,6 +27,7 @@ export const useCacheStore = defineStore(STORE_NAME, {
         throw new Error('Electron cache storage not implemented')
       } else if (process.env.__APP_PLATFORM__ === 'webext') {
         const cache = await CacheService.getCache({
+          // @ts-ignore
           db: application.db.getLastOpenedDb(),
           id
         })
@@ -52,6 +53,7 @@ export const useCacheStore = defineStore(STORE_NAME, {
         throw new Error('Electron cache storage not implemented')
       } else if (process.env.__APP_PLATFORM__ === 'webext') {
         const id = await CacheService.setCache({
+          // @ts-ignore
           db: application.db.getLastOpenedDb(),
           name,
           value

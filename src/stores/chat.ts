@@ -26,7 +26,7 @@ export const useChatStore = defineStore(STORE_NAME, {
       await application.service.call(ServiceType.dchat, 'subscribeTopic', topic)
     },
     async sendText(type: SessionType = SessionType.CONTACT, to: string, msg: string) {
-      application.service.call(ServiceType.dchat, 'sendText', type, to, msg)
+      await application.service.call(ServiceType.dchat, 'sendText', type, to, msg)
     },
     async sendImage(type: SessionType, to: string, path: string) {
       // let message = await window.ipc.invoke(CHANNEL, INSTANCE, 'sendImage', type, to, path)

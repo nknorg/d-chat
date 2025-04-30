@@ -1,6 +1,8 @@
 import { Message, MultiClient } from 'nkn-sdk'
 import { Connect } from '../../chat/connect'
+import { CacheSchema } from '../../schema/cache'
 import { ContactSchema, IContactSchema } from '../../schema/contact'
+import { ContactType } from '../../schema/contactEnum'
 import { MessageSchema } from '../../schema/message'
 import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
 import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
@@ -18,14 +20,10 @@ import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
 import { TopicDb } from '../database/topic'
 import { ClientNotReadyError } from '../error/ClientNotReadyError'
-import { MessageService } from './messageService'
-import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
-import { ContactDb } from '../database/contact'
-import { ContactService } from './contactService'
-import { ContactType } from '../../schema/contactEnum'
-import { CacheDb, CacheDbModel, MediaType } from '../database/cache'
 import { CacheService } from './cacheService'
-import { CacheSchema } from '../../schema/cache'
+import { ContactService } from './contactService'
+import { MessageService, sendOptions } from './messageService'
+import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -33,7 +31,6 @@ export class Dchat implements ChatProtocol {
   private _deviceId: string
 
   private blockHeightTopicSubscribeDefault = 400000 // 93days
-  private sendOptions = { noReply: true, msgHoldingSeconds: 8640000 }
   private _currentChatTargetId?: string
 
   private _addMessage?: AddMessageHandler
@@ -122,7 +119,35 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async handleContact(message: MessageSchema) {}
+  async receiveContactResponseMessage(
+    src: string,
+    payload: IPayloadSchema & {
+      responseType: string
+      version: string
+      content: {
+        avatar: {
+          type: string
+          data: string
+          ext: string
+        }
+        name: string
+      }
+    }
+  ) {
+    if (!payload.responseType) {
+      return
+    }
+    await ContactService.receiveContactResponse({ client: this.client, db: this.db, address: src, payload })
+  }
+
+  async receiveContactRequestMessage(src: string, payload: IPayloadSchema & { requestType: string }) {
+    if (!payload.requestType) {
+      return
+    }
+    // TODO: handle contact request message
+  }
+
+  async handleContact(message: MessageSchema) { }
 
   async handleTopic(message: MessageSchema) {
     const topic = message.payload.topic
@@ -191,12 +216,40 @@ export class Dchat implements ChatProtocol {
           break
 
         case MessageContentType.topicSubscribe:
-          this.receiveTopicSubscribeMessage(raw.src, payload.topic)
+          this.receiveTopicSubscribeMessage(raw.src, payload.topic).catch((e) => {
+            logger.error('Failed to receive topic subscribe message:', e)
+          })
           break
         case MessageContentType.topicUnsubscribe:
-          this.receiveTopicUnsubscribeMessage(raw.src, payload.topic)
+          this.receiveTopicUnsubscribeMessage(raw.src, payload.topic).catch((e) => {
+            logger.error('Failed to receive topic unsubscribe message:', e)
+          })
           break
-
+        case MessageContentType.contactProfile:
+          if ('requestType' in data) {
+            this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string }).catch((e) => {
+              logger.error('Failed to receive contact request message:', e)
+            })
+          } else if ('responseType' in data) {
+            this.receiveContactResponseMessage(
+              raw.src,
+              data as IPayloadSchema & {
+                responseType: string
+                version: string
+                content: {
+                  avatar: {
+                    type: string
+                    data: string
+                    ext: string
+                  }
+                  name: string
+                }
+              }
+            ).catch((e) => {
+              logger.error('Failed to receive contact response message:', e)
+            })
+          }
+          return
         default:
           logger.error('not support message type')
           return
@@ -313,7 +366,7 @@ export class Dchat implements ChatProtocol {
         throw new ClientNotReadyError()
       }
       await this.client.send(dest, JSON.stringify(payload), {
-        ...this.sendOptions
+        ...sendOptions
       })
     } catch (e) {
       logger.error(e)
@@ -357,7 +410,7 @@ export class Dchat implements ChatProtocol {
       logger.debug('topic subscribers', dest)
       try {
         await this.client.send(dest, message.payload.toData(), {
-          ...this.sendOptions,
+          ...sendOptions,
           messageId: message.messageId
         })
         message.status = MessageStatus.Sent
@@ -368,7 +421,7 @@ export class Dchat implements ChatProtocol {
       try {
         logger.debug(`send message to: ${to}, payload:`, message.payload.toData())
         await this.client.send(dest, message.payload.toData(), {
-          ...this.sendOptions,
+          ...sendOptions,
           messageId: message.messageId
         })
         message.status = MessageStatus.Sent
@@ -418,9 +471,9 @@ export class Dchat implements ChatProtocol {
       offset?: number
       limit?: number
     } = {
-      offset: 0,
-      limit: 20
-    }
+        offset: 0,
+        limit: 20
+      }
   ): Promise<MessageSchema[]> {
     try {
       const messageDb = new MessageDb(this.db)
@@ -671,7 +724,7 @@ export class Dchat implements ChatProtocol {
   }
 
   async getOrCreateContact(address: string, { type }: { type?: ContactType }): Promise<ContactSchema | null> {
-    return ContactService.getOrCreateContact({ db: this.db, address, type })
+    return ContactService.getOrCreateContact({ client: this.client, db: this.db, address, type })
   }
 
   async updateContact(contact: Partial<IContactSchema>): Promise<void> {

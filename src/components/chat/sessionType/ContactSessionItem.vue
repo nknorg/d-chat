@@ -1,13 +1,10 @@
 <template>
   <v-list-item :active="chatStore.currentTargetId == props.item.targetId" @click="selectedSession(item)">
     <template #prepend>
-      <v-avatar color="primary">
-        <!--TODO: use contact info -->
-        {{ item.targetId.substring(0, 2) }}
-      </v-avatar>
+      <ContactAvatar :item="contactInfo" />
     </template>
     <template #default="{}">
-      <v-list-item-title>{{ item.targetId.substring(0, 6) }}</v-list-item-title>
+      <v-list-item-title>{{ contactInfo?.displayName }}</v-list-item-title>
       <v-list-item-subtitle>
         <SessionListMessageSummary :session-item="item" />
       </v-list-item-subtitle>
@@ -29,16 +26,26 @@
 import UnreadBadge from '@/components/chat/UnreadBadge.vue'
 import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
+import { useContactStore } from '@/stores/contact'
 import { formatChatTime } from '@/utils/format'
-import { SessionSchema } from '@d-chat/core'
-import { Icon } from '@iconify/vue'
+import { SessionSchema, ContactSchema } from '@d-chat/core'
+import { ref, onMounted } from 'vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()
+const contactStore = useContactStore()
+const contactInfo = ref<ContactSchema>()
 
 const props = defineProps<{
   item: SessionSchema
 }>()
+
+onMounted(async () => {
+  const contact = await contactStore.getContactInfo({ type: props.item.targetType, address: props.item.targetId })
+  if (contact) {
+    contactInfo.value = contact
+  }
+})
 
 function selectedSession(s: SessionSchema) {
   chatStore.currentTargetId = s.targetId

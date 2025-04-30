@@ -1,7 +1,6 @@
 <template>
   <TextMessage v-if="props.message.payload.contentType == MessageContentType.text" :message="props.message" />
   <ImageMessage v-else-if="props.message.payload.contentType == MessageContentType.image" :message="props.message" />
-  <TopicSubscribe v-else-if="props.message.payload.contentType == MessageContentType.topicSubscribe" :message="props.message" />
 </template>
 <script setup lang="ts">
 import { MessageContentType, MessageSchema } from '@d-chat/core'

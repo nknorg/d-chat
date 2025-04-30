@@ -3,53 +3,90 @@ import nkn from 'nkn-sdk'
 import { MessageContentType } from '../../schema/messageEnum'
 import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
 
+export interface MessageOptions {
+  id?: string
+  type?: MessageContentType
+  topic?: string
+  groupId?: string
+  deviceId?: string
+  timestamp?: number
+}
+
+export const sendOptions = { noReply: true, msgHoldingSeconds: 8640000 }
+
 export class MessageService {
   static createMessageId(): Uint8Array {
     return nkn.util.randomBytes(8)
   }
 
-  static createTextPayload(
-    content: string,
-    options?: {
-      id?: string
-      type?: MessageContentType
-      topic?: string
-      groupId?: string
-      deviceId?: string
-      timestamp?: number
-    }
-  ): IPayloadSchema {
-    const data: IPayloadSchema = {
+  private static fillPayloadFields(basePayload: Partial<IPayloadSchema>, options?: MessageOptions): IPayloadSchema {
+    return {
       id: options?.id ?? uuidv4(),
       timestamp: options?.timestamp ?? Date.now(),
       deviceId: options?.deviceId,
       contentType: options?.type ?? MessageContentType.text,
-      content: content
+      ...basePayload,
+      ...(options?.topic ? { topic: options.topic } : {}),
+      ...(options?.groupId ? { groupId: options.groupId } : {})
     }
-    if (options?.topic) {
-      data.topic = options.topic
-    }
-    if (options?.groupId) {
-      data.groupId = options.groupId
-    }
-    return data
+  }
+
+  static createTextPayload(content: string, options?: MessageOptions): IPayloadSchema {
+    return this.fillPayloadFields({ content }, options)
   }
 
   static createTopicSubscribePayload(topic: string): IPayloadSchema {
-    return {
-      id: uuidv4(),
-      timestamp: Date.now(),
+    return this.fillPayloadFields({
       contentType: MessageContentType.topicSubscribe,
-      topic: topic
-    }
+      topic
+    })
   }
 
   static createTopicUnsubscribePayload(topic: string): IPayloadSchema {
-    return {
-      id: uuidv4(),
-      timestamp: Date.now(),
+    return this.fillPayloadFields({
       contentType: MessageContentType.topicUnsubscribe,
-      topic: topic
+      topic
+    })
+  }
+
+  static createContactRequestPayload({ requestType = 'header', version }: { requestType: 'header' | 'full'; version: string }): IPayloadSchema & {
+    requestType: string
+    version: string
+  } {
+    return {
+      ...this.fillPayloadFields({
+        contentType: MessageContentType.contactProfile
+      }),
+      requestType: requestType,
+      version: version
+    }
+  }
+
+  static createContactResponsePayload({
+    avatar,
+    name,
+    responseType = 'header',
+    version
+  }: {
+    avatar: {
+      type: 'base64'
+      data: string
+      ext: string
+    }
+    name: string
+    responseType: 'header' | 'full'
+    version: string
+  }): IPayloadSchema & {
+    responseType: string
+    version: string
+  } {
+    return {
+      ...this.fillPayloadFields({
+        contentType: MessageContentType.contactProfile
+      }),
+      responseType: responseType,
+      content: { avatar, name },
+      version: version
     }
   }
 }

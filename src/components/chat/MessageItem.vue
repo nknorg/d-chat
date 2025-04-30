@@ -1,6 +1,6 @@
 <template>
   <v-row v-if="props.message.payload.contentType === MessageContentType.topicSubscribe" class="align-self-center">
-    <v-col class="pa-0" >
+    <v-col class="pa-0">
       <TopicSubscribe :message="props.message" />
     </v-col>
   </v-row>
@@ -9,12 +9,10 @@
   </v-row>
   <v-row v-else-if="!props.message.isOutbound" dense>
     <v-col cols="auto">
-      <!--      TODO: use contact info-->
-      <v-avatar width="200" color="primary">{{ props.message.sender.substring(0, 2) }}</v-avatar>
+      <ContactAvatar :item="contactInfo" />
     </v-col>
     <v-col>
-      <!-- TODO: add contact name-->
-      <h4>{{ props.message.sender.substring(0, 6) }}</h4>
+      <h4>{{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}</h4>
       <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent style="flex: auto">
         <MessageContent :message="props.message" />
         <div class="footer">
@@ -26,18 +24,35 @@
   <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="green" theme="dark" prominent style="flex: auto">
     <MessageContent :message="props.message" />
     <div class="footer">
-      <v-label class="body-small"> 10:30</v-label>
+      <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
     </div>
   </v-alert>
 </template>
 <script setup lang="ts">
-import { MessageContentType, MessageSchema } from '@d-chat/core'
-import { defineProps } from 'vue'
+import { MessageContentType, MessageSchema, SessionType, ContactSchema, ContactService } from '@d-chat/core'
+import { defineProps, ref, onMounted } from 'vue'
 import { formatChatTime } from '@/utils/format'
+import { useContactStore } from '@/stores/contact'
+import ContactAvatar from '../contact/ContactAvatar.vue'
 
 const props = defineProps<{
   message: MessageSchema
 }>()
+
+const contactStore = useContactStore()
+const contactInfo = ref<ContactSchema>()
+
+onMounted(async () => {
+  if (!props.message.isOutbound) {
+    const contact = await contactStore.getContactInfo({
+      type: SessionType.CONTACT,
+      address: props.message.sender
+    })
+    if (contact) {
+      contactInfo.value = contact
+    }
+  }
+})
 </script>
 <style>
 .alert {

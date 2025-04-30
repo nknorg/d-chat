@@ -63,6 +63,21 @@ export class ContactSchema implements IContactSchema {
     }
   }
 
+  get displayName(): string {
+    if (this.firstName != null && this.firstName.length > 0) {
+      return this.firstName
+    }
+
+    const index = this.address.lastIndexOf('.')
+    if (index < 0) {
+      return this.address.substring(0, 6)
+    } else if (this.address.length > index + 7) {
+      return this.address.substring(0, index + 7)
+    } else {
+      return this.address
+    }
+  }
+
   toDbModel(): ContactDbModel {
     return {
       id: this.id,

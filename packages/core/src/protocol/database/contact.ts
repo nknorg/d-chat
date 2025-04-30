@@ -13,7 +13,6 @@ export interface ContactDbModel {
   avatar?: string
   first_name?: string
   last_name?: string
-  remark_name?: string
   profile_version?: string
   profile_expires_at?: number
   options?: string
@@ -73,7 +72,7 @@ export class ContactDb implements IContactDb {
       if (!existingModel) {
         throw new Error('Contact not found')
       }
-      
+
       // Only update fields that are provided in the model
       const updates: Partial<ContactDbModel> = {}
       for (const key in model) {
@@ -81,7 +80,7 @@ export class ContactDb implements IContactDb {
           updates[key] = model[key]
         }
       }
-      
+
       await this.db.table(ContactDb.tableName).update(model.id, updates)
     } catch (e) {
       logger.error(e)

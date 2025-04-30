@@ -22,7 +22,7 @@
               <div class="position-absolute bottom-0 right-0">
                 <Icon icon="material-symbols:flip-camera-ios-outline-rounded" width="30" height="30" class="cursor-pointer" @click="handleAvatarClick" />
               </div>
-              <input type="file" ref="fileInput" accept="image/*" style="display: none" @change="handleFileChange" />
+              <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileChange" />
             </div>
           </v-col>
         </v-row>
@@ -78,7 +78,7 @@ import { useClientStore } from '@/stores/client'
 import { useContactStore } from '@/stores/contact'
 import { useNotificationStore } from '@/stores/notification'
 import { copyToClipboard } from '@/utils/util'
-import { ContactSchema, ContactService, IContactSchema, logger, SessionType } from '@d-chat/core'
+import { IContactSchema, logger, SessionType } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import QrcodeVue from 'qrcode.vue'
 import { onBeforeMount, onUnmounted, reactive, ref, watch } from 'vue'
@@ -111,12 +111,15 @@ const state = reactive<State>({
 })
 
 // Add watch for dialog state
-watch(() => state.dialog, async (newValue) => {
-  if (!newValue) {
-    // Reset state when dialog is closed
-    await resetState()
+watch(
+  () => state.dialog,
+  async (newValue) => {
+    if (!newValue) {
+      // Reset state when dialog is closed
+      await resetState()
+    }
   }
-})
+)
 
 // Add reset function
 const resetState = async () => {
@@ -129,7 +132,7 @@ const resetState = async () => {
 
     if (contact && typeof contact === 'object' && 'address' in contact && 'type' in contact) {
       // Reset nickname
-      state.nickname = contact.firstName ?? ContactService.getNickName(contact)
+      state.nickname = contact.firstName ?? contact.displayName
 
       // Reset avatar
       if (state.avatarUrl) {
@@ -144,9 +147,7 @@ const resetState = async () => {
         const cacheStore = useCacheStore()
         const avatarCache = await cacheStore.getCache(contact.avatar)
         if (avatarCache) {
-          state.avatarUrl = avatarCache.source instanceof Blob 
-            ? URL.createObjectURL(avatarCache.source)
-            : avatarCache.source
+          state.avatarUrl = avatarCache.source instanceof Blob ? URL.createObjectURL(avatarCache.source) : avatarCache.source
         }
       }
     }
@@ -168,16 +169,14 @@ onBeforeMount(async () => {
     })
     if (contact && typeof contact === 'object' && 'address' in contact && 'type' in contact) {
       // Set nickname
-      state.nickname = contact.firstName ?? ContactService.getNickName(contact)
+      state.nickname = contact.firstName ?? contact.displayName
 
       // Load avatar if exists
       if (contact.avatar) {
         const cacheStore = useCacheStore()
         const avatarCache = await cacheStore.getCache(contact.avatar)
         if (avatarCache) {
-          state.avatarUrl = avatarCache.source instanceof Blob 
-            ? URL.createObjectURL(avatarCache.source)
-            : avatarCache.source
+          state.avatarUrl = avatarCache.source instanceof Blob ? URL.createObjectURL(avatarCache.source) : avatarCache.source
         }
       }
     }
@@ -188,7 +187,6 @@ onBeforeMount(async () => {
       message: t('failed_to_load_profile')
     })
   }
-
 })
 
 const handleAvatarClick = () => {

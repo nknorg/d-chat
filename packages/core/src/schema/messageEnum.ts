@@ -25,7 +25,7 @@ export enum MessageContentType {
   privateGroupMemberRequest = 'privateGroup:memberRequest',
   privateGroupMemberResponse = 'privateGroup:memberResponse',
 
-  contactProfile = 'contact:profile',
+  contactProfile = 'contact',
   contactOptions = 'contact:options',
   deviceRequest = 'device:request',
   deviceInfo = 'device:info'

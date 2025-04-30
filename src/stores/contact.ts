@@ -15,15 +15,28 @@ interface ContactData {
 }
 
 export const useContactStore = defineStore(STORE_NAME, {
-  state: () => ({
-    contactInfoMap: {} as Record<string, ContactData>
+  state: (): {
+    contactInfoMap: Record<string, ContactData>
+    myProfile: ContactSchema
+  } => ({
+    contactInfoMap: {},
+    myProfile: undefined
   }),
-
   actions: {
-    async getContactInfoMap({ type, address }: { type: SessionType; address: string }) {
+    async getMyProfile() {
+      const clientStore = useClientStore()
+      const result = await this.getContactInfo({ type: SessionType.CONTACT, address: clientStore.lastSignInId })
+      if (result) {
+        this.myProfile = result
+      }
+      return this.myProfile
+    },
+    async getContactInfo({ type, address }: { type: SessionType; address: string }) {
       const key = `${type}-${address}`
       const cached = this.contactInfoMap[key]
-      if (cached) {
+      const hasProfile = !!cached?.data?.profileVersion
+      const hasAvatar = !!cached?.data?.avatar
+      if (cached && hasProfile && hasAvatar) {
         return cached.data
       } else {
         const data = await this.queryContactInfo({ type, address })
@@ -56,6 +69,18 @@ export const useContactStore = defineStore(STORE_NAME, {
 
     async updateContact(contact: Partial<IContactSchema>) {
       await application.service.call(ServiceType.dchat, 'updateContact', contact)
+
+      // Update local cache
+      const key = `${SessionType.CONTACT}-${contact.address}`
+      const existingData = this.contactInfoMap[key]
+      if (existingData) {
+        // Update the cached data with new values
+        Object.assign(existingData.data, contact)
+        // Update myProfile if it's my profile
+        if (contact.address === useClientStore().lastSignInId && this.myProfile) {
+          Object.assign(this.myProfile, contact)
+        }
+      }
     }
   }
 })

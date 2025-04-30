@@ -15,11 +15,7 @@
       hide-details
     ></v-text-field>
 
-    <v-checkbox
-      v-model="state.savePassword"
-      density="compact"
-      :label="$t('auto_sign_in')"
-    ></v-checkbox>
+    <v-checkbox v-model="state.savePassword" density="compact" :label="$t('auto_sign_in')"></v-checkbox>
 
     <v-card class="mb-8" color="surface-variant" variant="tonal">
       <v-card-text class="text-medium-emphasis text-caption">
@@ -27,15 +23,7 @@
       </v-card-text>
     </v-card>
 
-    <v-btn
-      :loading="state.signInLoading"
-      class="mb-4"
-      color="blue"
-      size="large"
-      variant="tonal"
-      block
-      @click="signIn"
-    >
+    <v-btn :loading="state.signInLoading" class="mb-4" color="blue" size="large" variant="tonal" block @click="signIn">
       {{ $t('login') }}
     </v-btn>
 
@@ -43,7 +31,6 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import SelectAccount from '@/components/wallet/SelectAccount.vue'
 import { useClientStore } from '@/stores/client'
 import { useWalletStore } from '@/stores/wallet'
 import { WalletRecord, logger } from '@d-chat/core'

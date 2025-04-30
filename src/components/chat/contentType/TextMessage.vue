@@ -10,9 +10,15 @@ const props = defineProps<{
   message: MessageSchema
 }>()
 
+const renderer = new marked.Renderer()
+renderer.link = ({ href, title, text }) => {
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer"${title ? ` title="${title}"` : ''}>${text}</a>`
+}
+
 marked.setOptions({
   gfm: true,
-  breaks: true
+  breaks: true,
+  renderer: renderer
 })
 
 const safeHtml = computed(() => {

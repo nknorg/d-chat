@@ -1,15 +1,7 @@
 <template>
   <v-list-item :active="chatStore.currentTargetId == props.item.targetId" @click="selectedSession(item)">
     <template #prepend>
-      <v-avatar color="primary" class="relative" style="overflow: visible">
-        <!--TODO: use topic info -->
-        {{ item.targetId.substring(0, 2) }}
-        <span style="position: absolute; top: -4px; right: -4px">
-          <v-chip variant="outlined" size="14">
-            <svg-icon name="group" color="#fff" :size="14" />
-          </v-chip>
-        </span>
-      </v-avatar>
+      <TopicAvatar :item="topicInfo" />
     </template>
     <template #default="{}">
       <v-list-item-title class="d-flex align-center">
@@ -45,12 +37,14 @@ import { useChatStore } from '@/stores/chat'
 import { useContactStore } from '@/stores/contact'
 import { useSessionStore } from '@/stores/session'
 import { formatChatTime } from '@/utils/format'
-import { SessionSchema } from '@d-chat/core'
+import { SessionSchema, TopicSchema } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
+import { onMounted, ref } from 'vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()
 const contactStore = useContactStore()
+const topicInfo = ref<TopicSchema>()
 
 const props = defineProps<{
   item: SessionSchema
@@ -58,6 +52,12 @@ const props = defineProps<{
 
 const key = `${props.item.targetType}-${props.item.targetId}`
 
+onMounted(async () => {
+  const contact = await contactStore.getContactInfo({ type: props.item.targetType, address: props.item.targetId })
+  if (contact) {
+    topicInfo.value = contact
+  }
+})
 
 function selectedSession(s: SessionSchema) {
   chatStore.currentTargetId = s.targetId
