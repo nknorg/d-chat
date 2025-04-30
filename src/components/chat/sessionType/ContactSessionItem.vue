@@ -4,19 +4,18 @@
       <ContactAvatar :item="contactInfo" />
     </template>
     <template #default="{}">
-      <v-list-item-title>{{ contactInfo?.displayName }}</v-list-item-title>
-      <v-list-item-subtitle>
-        <SessionListMessageSummary :session-item="item" />
+      <v-list-item-title class="d-flex align-center">{{ contactInfo?.displayName }}</v-list-item-title>
+      <v-list-item-subtitle class="d-flex align-center">
+        <SessionListMessageSummary class="text-truncate" :session-item="item" />
       </v-list-item-subtitle>
     </template>
     <template #append>
-      <v-layout class="flex-column justify-space-around align-end" style="height: 50px">
+      <v-layout class="flex-column justify-space-between align-end" style="height: 50px">
         <UnreadBadge :count="item.unReadCount" />
-        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
-      </v-layout>
-      <v-layout class="flex-column justify-space-between align-center" style="height: 50px">
-        <span></span>
-        <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
+        <v-layout class="d-flex align-center">
+          <v-chip class="flex-0-0" label size="small" density="compact" variant="text">{{ formatChatTime(item.lastMessageAt) }}</v-chip>
+          <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
+        </v-layout>
       </v-layout>
     </template>
   </v-list-item>

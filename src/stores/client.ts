@@ -28,7 +28,6 @@ export const useClientStore = defineStore(STORE_NAME, {
 
       application.service.call(ServiceType.dchat, 'init')
       this.lastSignInId = await application.service.call(ServiceType.Connect, 'connect', seed)
-
       // get MyProfile
       const contactStore = useContactStore()
       await contactStore.getMyProfile()

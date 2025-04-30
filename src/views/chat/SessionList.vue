@@ -2,7 +2,7 @@
   <v-card style="height: 100%; margin-bottom: 60px">
     <NoSessionList v-if="!sessionStore.sessionList || sessionStore.sessionList.length === 0" />
     <Splitpanes v-else class="default-theme" :horizontal="!!$vuetify.display.xs">
-      <Pane min-size="20" max-size="50" size="30">
+      <Pane min-size="20" max-size="50" size="30" style="min-width: 300px">
         <div>
           <v-list select-strategy="single-leaf" lines="two" class="pa-0">
             <transition-group name="list" tag="div">

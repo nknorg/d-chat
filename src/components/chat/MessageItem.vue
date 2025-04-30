@@ -1,19 +1,19 @@
 <template>
-  <v-row v-if="props.message.payload.contentType === MessageContentType.topicSubscribe" class="align-self-center">
+  <v-row v-if="props.message.payload.contentType === MessageContentType.topicSubscribe" class="align-self-center flex-grow-0">
     <v-col class="pa-0">
       <TopicSubscribe :message="props.message" />
     </v-col>
   </v-row>
-  <v-row v-else-if="props.message.payload.contentType === MessageContentType.topicUnsubscribe" class="align-self-center">
+  <v-row v-else-if="props.message.payload.contentType === MessageContentType.topicUnsubscribe" class="align-self-center flex-grow-0">
     <TopicUnsubscribe :message="props.message" />
   </v-row>
-  <v-row v-else-if="!props.message.isOutbound" dense>
+  <v-row v-else-if="!props.message.isOutbound" dense class="flex-grow-0">
     <v-col cols="auto">
       <ContactAvatar :item="contactInfo" />
     </v-col>
     <v-col>
       <h4>{{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}</h4>
-      <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent style="flex: auto">
+      <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent>
         <MessageContent :message="props.message" />
         <div class="footer">
           <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
@@ -21,7 +21,7 @@
       </v-alert>
     </v-col>
   </v-row>
-  <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="green" theme="dark" prominent style="flex: auto">
+  <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="green" theme="dark" prominent>
     <MessageContent :message="props.message" />
     <div class="footer">
       <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
@@ -58,7 +58,7 @@ onMounted(async () => {
 .alert {
   flex-grow: 0 !important;
   overflow: unset !important;
-  /*min-height: 50px !important;*/
+  width: fit-content;
 }
 
 .target-alert {

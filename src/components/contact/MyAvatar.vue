@@ -1,7 +1,7 @@
 <template>
   <v-card elevation="0" class="mx-auto" density="compact">
     <template #title>
-      {{ contactStore?.myProfile.displayName }}
+      {{ contactStore?.myProfile?.displayName }}
     </template>
     <template #prepend>
       <div class="position-relative">
@@ -29,12 +29,12 @@
   </v-card>
 </template>
 <script lang="ts" setup>
-import { useContactStore } from '@/stores/contact'
-import { ConnectionStatus, ContactService } from '@d-chat/core'
-import { useClientStore } from '@/stores/client'
 import { useCacheStore } from '@/stores/cache'
+import { useClientStore } from '@/stores/client'
+import { useContactStore } from '@/stores/contact'
+import { ConnectionStatus } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 const clientStore = useClientStore()
 const contactStore = useContactStore()
@@ -52,9 +52,12 @@ const loadAvatar = async () => {
   }
 }
 
-watch(() => contactStore?.myProfile?.avatar, async () => {
-  await loadAvatar()
-})
+watch(
+  () => contactStore?.myProfile?.avatar,
+  async () => {
+    await loadAvatar()
+  }
+)
 
 onMounted(async () => {
   await loadAvatar()

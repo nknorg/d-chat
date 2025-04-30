@@ -2,6 +2,7 @@ import { IService, Service, ServiceType } from '@/common/service'
 import { i18n } from '@/plugins/i18n'
 import { useClientStore } from '@/stores/client'
 import { useCommonStore } from '@/stores/common'
+import { useContactStore } from '@/stores/contact'
 import { useWalletStore } from '@/stores/wallet'
 import { LightTheme } from '@/theme/light'
 import { SkinTheme } from '@/theme/theme'
@@ -66,6 +67,7 @@ export class Application {
     // @ts-ignore
     i18n.global.locale.value = locale ?? browserLocale
 
+    // init client
     const clientStore = useClientStore()
     await clientStore.getLastSignInId()
     await clientStore.getLastSignInStatus()
@@ -84,6 +86,10 @@ export class Application {
         await clientStore.connect(seed)
       }
     }
+
+    // init MyProfile
+    const contactStore = useContactStore()
+    await contactStore.getMyProfile()
 
     this.loading.value = false
     return

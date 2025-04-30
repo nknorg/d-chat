@@ -3,6 +3,7 @@ import { useChatStore } from '@/stores/chat'
 import { useMessageStore } from '@/stores/message'
 import { useSessionStore } from '@/stores/session'
 
+// @ts-ignore
 const port = chrome.runtime.connect({ name: 'dchat' })
 
 port.onMessage.addListener(function (msg) {

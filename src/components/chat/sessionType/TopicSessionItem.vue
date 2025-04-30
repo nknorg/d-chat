@@ -7,25 +7,27 @@
       <v-list-item-title class="d-flex align-center">
         {{ item.targetId }}
       </v-list-item-title>
-      <v-list-item-subtitle>
-        <SessionListMessageSummary :session-item="item" />
+      <v-list-item-subtitle class="d-flex align-center">
+        <SessionListMessageSummary class="text-truncate" :session-item="item" />
       </v-list-item-subtitle>
     </template>
     <template #append>
-      <v-layout class="flex-column justify-space-around align-end" style="height: 50px">
-        <UnreadBadge :count="item.unReadCount" />
-        <span class="body-regular">{{ formatChatTime(item.lastMessageAt) }}</span>
-      </v-layout>
       <v-layout class="flex-column justify-space-between align-end" style="height: 50px">
-        <v-chip color="blue" density="comfortable" size="small" variant="tonal" link @click.stop="null">
-          <template #prepend>
-            <Icon icon="material-symbols:groups-2-rounded" class="mr-1"></Icon>
-          </template>
-          <template #append>
-            <span class="body-small">{{ contactStore.contactInfoMap[key]?.data['count'] }}</span>
-          </template>
-        </v-chip>
-        <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
+        <v-layout class="d-flex align-center">
+          <UnreadBadge :count="item.unReadCount" />
+          <v-chip color="blue" density="comfortable" size="small" variant="tonal" link @click.stop="null">
+            <template #prepend>
+              <Icon icon="material-symbols:groups-2-rounded" class="mr-1"></Icon>
+            </template>
+            <template #append>
+              <span class="body-small">{{ contactStore.contactInfoMap[key]?.data['count'] }}</span>
+            </template>
+          </v-chip>
+        </v-layout>
+        <v-layout class="d-flex align-center">
+          <v-chip label size="small" density="compact" variant="text">{{ formatChatTime(item.lastMessageAt) }}</v-chip>
+          <v-btn density="comfortable" size="small" icon="mdi-dots-horizontal" variant="text" @click.stop="null"></v-btn>
+        </v-layout>
       </v-layout>
     </template>
   </v-list-item>
