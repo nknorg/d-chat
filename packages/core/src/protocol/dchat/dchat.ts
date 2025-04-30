@@ -19,7 +19,6 @@ import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
 import { TopicDb } from '../database/topic'
-import { ClientNotReadyError } from '../error/ClientNotReadyError'
 import { CacheService } from './cacheService'
 import { ContactService } from './contactService'
 import { MessageService, sendOptions } from './messageService'
@@ -147,22 +146,30 @@ export class Dchat implements ChatProtocol {
     // TODO: handle contact request message
   }
 
-  async handleContact(message: MessageSchema) { }
+  async handleContact(message: MessageSchema) {}
 
   async handleTopic(message: MessageSchema) {
     const topic = message.payload.topic
     const sender = message.sender
 
-    // Check if topic needs to be synced
-    const shouldSync = await this.shouldSyncTopic(topic)
+    // Check if topic needs to be subscribed
+    const shouldSubscribe = await this.shouldSubscribeTopic(topic)
 
-    // Check if sender is in subscribers list
-    const subscriberDb = new SubscriberDb(this.db)
-    const existingSubscriber = await subscriberDb.getByTopicAndContactAddress(topic, sender)
+    // If topic needs to be subscribed, subscribe the topic
+    if (shouldSubscribe) {
+      await this.subscribeTopic(topic)
+    } else {
+      // Check if topic needs to be synced
+      const shouldSync = await this.shouldSyncTopic(topic)
 
-    // If topic needs sync or sender is not in subscribers list, sync the topic
-    if (shouldSync || !existingSubscriber) {
-      await this.syncTopicSubscribers(topic)
+      // Check if sender is in subscribers list
+      const subscriberDb = new SubscriberDb(this.db)
+      const existingSubscriber = await subscriberDb.getByTopicAndContactAddress(topic, sender)
+
+      // If topic needs sync or sender is not in subscribers list, sync the topic
+      if (shouldSync || !existingSubscriber) {
+        await this.syncTopicSubscribers(topic)
+      }
     }
   }
 
@@ -481,9 +488,9 @@ export class Dchat implements ChatProtocol {
       offset?: number
       limit?: number
     } = {
-        offset: 0,
-        limit: 20
-      }
+      offset: 0,
+      limit: 50
+    }
   ): Promise<MessageSchema[]> {
     try {
       const messageDb = new MessageDb(this.db)
@@ -764,7 +771,17 @@ export class Dchat implements ChatProtocol {
   }
 
   async getOrCreateContact(address: string, { type }: { type?: ContactType }): Promise<ContactSchema | null> {
-    return ContactService.getOrCreateContact({ client: this.client, db: this.db, address, type })
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
+    }
+    const localContact = await ContactService.getOrCreateContact({ db: this.db, address: this.client.addr, type: ContactType.ME })
+    const version = localContact?.profileVersion ?? '0'
+    return ContactService.getOrCreateContact({ client: this.client, db: this.db, address, type, version })
   }
 
   async updateContact(contact: Partial<IContactSchema>): Promise<void> {
@@ -774,17 +791,24 @@ export class Dchat implements ChatProtocol {
   private async shouldSyncTopic(topic: string): Promise<boolean> {
     const topicDb = new TopicDb(this.db)
     const record = await topicDb.getByTopic(topic)
-
     if (!record) return true
 
-    const blockHeight = await this.getBlockHeight()
-    const shouldSyncByExpire = record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
-    
     // Get online count for comparison
     const onlineCount = await this.getTopicSubscribersCount(topic)
     const shouldSyncByCount = record.count !== onlineCount
 
-    return shouldSyncByExpire || shouldSyncByCount
+    return shouldSyncByCount
+  }
+
+  private async shouldSubscribeTopic(topic: string): Promise<boolean> {
+    const topicDb = new TopicDb(this.db)
+    const record = await topicDb.getByTopic(topic)
+    if (!record) return true
+
+    const blockHeight = await this.getBlockHeight()
+    const shouldSubscribeByExpire = record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
+
+    return shouldSubscribeByExpire && record.joined === 1
   }
 
   // Topic
@@ -792,7 +816,7 @@ export class Dchat implements ChatProtocol {
     try {
       const topicDb = new TopicDb(this.db)
       const record = await topicDb.getByTopic(topic)
-      
+
       // If client is not ready, return data from database
       if (!this.client?.isReady) {
         try {
@@ -802,23 +826,30 @@ export class Dchat implements ChatProtocol {
           throw e
         }
       }
-      
-      // Check if topic data is missing or expired
-      const shouldSync = await this.shouldSyncTopic(topic)
-      
-      if (shouldSync) {
-        // Sync topic data if missing or expired
-        await this.syncTopicSubscribers(topic)
-        // Get the updated record after sync
+
+      // Helper function to get updated record
+      const getUpdatedRecord = async () => {
         const updatedRecord = await topicDb.getByTopic(topic)
-        if (updatedRecord) {
-          return TopicSchema.fromDbModel(updatedRecord)
-        }
-      } else if (record) {
-        return TopicSchema.fromDbModel(record)
+        return updatedRecord ? TopicSchema.fromDbModel(updatedRecord) : null
       }
 
-      return null
+      // Check if topic needs to be subscribed
+      const shouldSubscribe = await this.shouldSubscribeTopic(topic)
+
+      if (shouldSubscribe) {
+        await this.subscribeTopic(topic)
+        return await getUpdatedRecord()
+      }
+
+      // Check if topic data is missing or expired
+      const shouldSync = await this.shouldSyncTopic(topic)
+
+      if (shouldSync) {
+        await this.syncTopicSubscribers(topic)
+        return await getUpdatedRecord()
+      }
+
+      return record ? TopicSchema.fromDbModel(record) : null
     } catch (e) {
       logger.error('Failed to get topic info:', e)
       return null

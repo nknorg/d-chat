@@ -142,7 +142,7 @@ export class MessageDb implements IMessageDb {
       limit?: number
     } = {
       offset: 0,
-      limit: 20
+      limit: 50
     }
   ): Promise<MessageDbModel[]> {
     const query = this.db

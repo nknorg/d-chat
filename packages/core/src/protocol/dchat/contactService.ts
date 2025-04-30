@@ -24,7 +24,19 @@ export class ContactService {
     }
   }
 
-  static async getOrCreateContact({ client, db, address, type }: { client?: MultiClient; db: Dexie; address: string; type?: ContactType }): Promise<ContactSchema | null> {
+  static async getOrCreateContact({
+    client,
+    db,
+    address,
+    type,
+    version
+  }: {
+    client?: MultiClient
+    db: Dexie
+    address: string
+    type?: ContactType
+    version?: string
+  }): Promise<ContactSchema | null> {
     if (!address || !db) return null
 
     const contactDb = new ContactDb(db)
@@ -34,6 +46,11 @@ export class ContactService {
       const contactSchema = ContactSchema.fromDbModel(contact)
       const now = Date.now()
 
+      // Skip requestContact if type is ME
+      if (type === ContactType.ME) {
+        return contactSchema
+      }
+
       // Check if profile is expired (24 hours)
       if (!contactSchema.profileExpiresAt || contactSchema.profileExpiresAt < now) {
         // Profile expired, request full profile
@@ -42,7 +59,8 @@ export class ContactService {
             client,
             db,
             contact: contactSchema,
-            requestType: 'full'
+            requestType: 'full',
+            version: version ?? '0'
           }).catch((e) => {
             logger.error('Failed to request contact:', e)
           })
@@ -54,7 +72,8 @@ export class ContactService {
             client,
             db,
             contact: contactSchema,
-            requestType: 'header'
+            requestType: 'header',
+            version: version ?? '0'
           }).catch((e) => {
             logger.error('Failed to request contact:', e)
           })
@@ -73,13 +92,14 @@ export class ContactService {
     const newContact = new ContactSchema(defaultContact)
     await contactDb.insert(newContact.toDbModel())
 
-    // Request full profile for new contact
-    if (client) {
+    // Request full profile for new contact, skip if type is ME
+    if (client && type !== ContactType.ME) {
       await this.requestContact({
         client,
         db,
         contact: newContact,
-        requestType: 'full'
+        requestType: 'full',
+        version: version ?? '0'
       })
     }
 
@@ -185,7 +205,7 @@ export class ContactService {
 
     const payload = MessageService.createContactRequestPayload({
       requestType,
-      version: version ?? contact?.profileVersion ?? '0'
+      version: version ?? '0'
     })
 
     try {

@@ -23,7 +23,7 @@ export const useMessageStore = defineStore(STORE_NAME, {
         limit?: number
       } = {
         offset: 0,
-        limit: 20
+        limit: 50
       }
     ) {
       const records = await application.service.call(ServiceType.dchat, 'getHistoryMessages', targetId, targetType, options)

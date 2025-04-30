@@ -23,9 +23,9 @@ export class MessageService {
     return {
       id: options?.id ?? uuidv4(),
       timestamp: options?.timestamp ?? Date.now(),
-      deviceId: options?.deviceId,
       contentType: options?.type ?? MessageContentType.text,
       ...basePayload,
+      ...(options?.deviceId ? { deviceId: options.deviceId } : {}),
       ...(options?.topic ? { topic: options.topic } : {}),
       ...(options?.groupId ? { groupId: options.groupId } : {})
     }
