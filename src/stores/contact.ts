@@ -58,7 +58,11 @@ export const useContactStore = defineStore(STORE_NAME, {
         }
         data = await application.service.call(ServiceType.dchat, 'getOrCreateContact', address, { type: conteactType })
       } else if (type === SessionType.TOPIC) {
-        data = await application.service.call(ServiceType.dchat, 'getTopicInfo', address)
+        // First try to get from database
+        data = await application.service.call(ServiceType.dchat, 'getTopicInfoFromDb', address)
+        if (!data) {
+          data = await application.service.call(ServiceType.dchat, 'getTopicInfo', address)
+        }
       }
 
       if (data) {

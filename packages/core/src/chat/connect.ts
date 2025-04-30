@@ -17,6 +17,7 @@ export class Connect {
   static clients: Record<string, MultiClient> = {}
   static lastSignInId: string | null
   static lastSignInStatus: ConnectionStatus = ConnectionStatus.Disconnected
+  private static clientConnectPromises: Record<string, { promise: Promise<void>, resolve: () => void, reject: (error: Error) => void }> = {}
 
   static async connect(wallet: Wallet | string) {
     this.lastSignInStatus = ConnectionStatus.Connecting
@@ -77,6 +78,12 @@ export class Connect {
 
       this.lastSignInStatus = ConnectionStatus.Connected
       ConnectEvent.onConnect?.(id, node)
+
+      // Handle clientConnectPromises
+      if (this.clientConnectPromises[id]) {
+        this.clientConnectPromises[id].resolve()
+        delete this.clientConnectPromises[id]
+      }
     })
 
     client.onMessage(async (message: Message) => {
@@ -86,6 +93,12 @@ export class Connect {
     client.onConnectFailed(() => {
       logger.error(`connect failed. Address: ${client.addr}`)
       ConnectEvent.onConnectFailed?.(id)
+      
+      // Handle clientConnectPromises on failure
+      if (this.clientConnectPromises[id]) {
+        this.clientConnectPromises[id].reject(new Error(`Client ${id} connection failed`))
+        delete this.clientConnectPromises[id]
+      }
     })
     return id
   }
@@ -97,6 +110,7 @@ export class Connect {
     delete this.clients[this.lastSignInId]
     this.lastSignInId = null
     this.lastSignInStatus = ConnectionStatus.Disconnected
+    this.clientConnectPromises = {}
   }
 
   static async newClient(options: MultiClientOptions) {
@@ -127,5 +141,46 @@ export class Connect {
     if (this.clients[this.lastSignInId] != null) {
       return this.clients[this.lastSignInId]
     }
+  }
+
+  static async waitForConnect(timeout: number = 30000): Promise<void> {
+    if (!this.lastSignInId) {
+      throw new Error('No client is connecting')
+    }
+    return this.waitForClientConnect(this.lastSignInId, timeout)
+  }
+
+  static async waitForClientConnect(clientId: string, timeout: number = 30000): Promise<void> {
+    const client = this.clients[clientId]
+    if (!client) {
+      throw new Error(`Client ${clientId} not found`)
+    }
+
+    if (client.isReady) {
+      return
+    }
+
+    if (this.clientConnectPromises[clientId]) {
+      return this.clientConnectPromises[clientId].promise
+    }
+
+    let resolvePromise: () => void
+    let rejectPromise: (error: Error) => void
+    const promise = new Promise<void>((resolve, reject) => {
+      resolvePromise = resolve
+      rejectPromise = reject
+      const timeoutId = setTimeout(() => {
+        delete this.clientConnectPromises[clientId]
+        reject(new Error(`Client ${clientId} connection timeout`))
+      }, timeout)
+    })
+
+    this.clientConnectPromises[clientId] = {
+      promise,
+      resolve: resolvePromise!,
+      reject: rejectPromise!
+    }
+
+    return promise
   }
 }

@@ -363,7 +363,12 @@ export class Dchat implements ChatProtocol {
   async send(dest: string[] | string, payload: IPayloadSchema): Promise<void> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       await this.client.send(dest, JSON.stringify(payload), {
         ...sendOptions
@@ -375,7 +380,12 @@ export class Dchat implements ChatProtocol {
 
   async sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema> {
     if (!this.client?.isReady) {
-      throw new ClientNotReadyError()
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
     }
     const payload = new PayloadSchema(MessageService.createTextPayload(msg, { deviceId: this._deviceId }))
     if (type == SessionType.TOPIC) {
@@ -505,7 +515,12 @@ export class Dchat implements ChatProtocol {
   async getBlockHeight(): Promise<number> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       const block = await this.client.getLatestBlock()
       return block.height
@@ -518,7 +533,12 @@ export class Dchat implements ChatProtocol {
   async getNonce(): Promise<number> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       const nonce = await this.client.getNonce(this.client.addr, { txPool: true })
       return nonce
@@ -531,7 +551,12 @@ export class Dchat implements ChatProtocol {
   async getTopicSubscribers(topic: string): Promise<string[]> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       return await SubscribeService.getSubscribers({
         client: this.client,
@@ -546,7 +571,12 @@ export class Dchat implements ChatProtocol {
   async getTopicSubscribersCount(topic: string): Promise<number> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       return await SubscribeService.getSubscribersCount({
         client: this.client,
@@ -561,7 +591,12 @@ export class Dchat implements ChatProtocol {
   async subscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       let isNewSubscription = true
       try {
@@ -601,7 +636,12 @@ export class Dchat implements ChatProtocol {
   async unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
     try {
       if (!this.client?.isReady) {
-        throw new ClientNotReadyError()
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
       // 1. Unsubscribe from the topic
       await SubscribeService.unsubscribe({
@@ -738,7 +778,13 @@ export class Dchat implements ChatProtocol {
     if (!record) return true
 
     const blockHeight = await this.getBlockHeight()
-    return record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
+    const shouldSyncByExpire = record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
+    
+    // Get online count for comparison
+    const onlineCount = await this.getTopicSubscribersCount(topic)
+    const shouldSyncByCount = record.count !== onlineCount
+
+    return shouldSyncByExpire || shouldSyncByCount
   }
 
   // Topic
@@ -746,15 +792,20 @@ export class Dchat implements ChatProtocol {
     try {
       const topicDb = new TopicDb(this.db)
       const record = await topicDb.getByTopic(topic)
-
+      
       // If client is not ready, return data from database
       if (!this.client?.isReady) {
-        return record ? TopicSchema.fromDbModel(record) : null
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
-
+      
       // Check if topic data is missing or expired
       const shouldSync = await this.shouldSyncTopic(topic)
-
+      
       if (shouldSync) {
         // Sync topic data if missing or expired
         await this.syncTopicSubscribers(topic)
@@ -770,6 +821,20 @@ export class Dchat implements ChatProtocol {
       return null
     } catch (e) {
       logger.error('Failed to get topic info:', e)
+      return null
+    }
+  }
+
+  async getTopicInfoFromDb(topic: string): Promise<TopicSchema | null> {
+    try {
+      const topicDb = new TopicDb(this.db)
+      const record = await topicDb.getByTopic(topic)
+      if (record) {
+        return TopicSchema.fromDbModel(record)
+      }
+      return null
+    } catch (e) {
+      logger.error('Failed to get topic info from database:', e)
       return null
     }
   }

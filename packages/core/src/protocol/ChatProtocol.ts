@@ -68,6 +68,8 @@ export interface ChatProtocol {
 
   // Topic
   getTopicInfo(topic: string): Promise<TopicSchema | null>
+  getTopicInfoFromDb(topic: string): Promise<TopicSchema | null>
+  getTopicSubscribersFromDb(topic: string): Promise<string[]>
 
   // Cache
   setCache(key: string, value: string): Promise<string>

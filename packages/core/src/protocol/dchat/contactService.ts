@@ -38,21 +38,25 @@ export class ContactService {
       if (!contactSchema.profileExpiresAt || contactSchema.profileExpiresAt < now) {
         // Profile expired, request full profile
         if (client) {
-          await this.requestContact({
+          this.requestContact({
             client,
             db,
             contact: contactSchema,
             requestType: 'full'
+          }).catch((e) => {
+            logger.error('Failed to request contact:', e)
           })
         }
       } else {
         // Profile not expired, request header to check version
         if (client) {
-          await this.requestContact({
+          this.requestContact({
             client,
             db,
             contact: contactSchema,
             requestType: 'header'
+          }).catch((e) => {
+            logger.error('Failed to request contact:', e)
           })
         }
       }
