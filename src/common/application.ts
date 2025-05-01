@@ -6,7 +6,7 @@ import { useContactStore } from '@/stores/contact'
 import { useWalletStore } from '@/stores/wallet'
 import { LightTheme } from '@/theme/light'
 import { SkinTheme } from '@/theme/theme'
-import { Db, LocalStorage, StoreAdapter } from '@d-chat/core'
+import { Db, LocalStorage, logger, StoreAdapter } from '@d-chat/core'
 import { ref } from 'vue'
 
 export class Application {
@@ -87,9 +87,11 @@ export class Application {
       }
     }
 
-    // init MyProfile
-    const contactStore = useContactStore()
-    await contactStore.getMyProfile()
+    if (clientStore.lastSignInId != null) {
+      // init MyProfile
+      const contactStore = useContactStore()
+      contactStore.getMyProfile().catch((err) => logger.error(err))
+    }
 
     this.loading.value = false
     return

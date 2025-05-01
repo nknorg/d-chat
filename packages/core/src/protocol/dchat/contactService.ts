@@ -65,19 +65,6 @@ export class ContactService {
             logger.error('Failed to request contact:', e)
           })
         }
-      } else {
-        // Profile not expired, request header to check version
-        if (client) {
-          this.requestContact({
-            client,
-            db,
-            contact: contactSchema,
-            requestType: 'header',
-            version: version ?? '0'
-          }).catch((e) => {
-            logger.error('Failed to request contact:', e)
-          })
-        }
       }
 
       return contactSchema
@@ -90,8 +77,17 @@ export class ContactService {
     }
 
     const newContact = new ContactSchema(defaultContact)
-    await contactDb.insert(newContact.toDbModel())
-
+    try {
+      await contactDb.insert(newContact.toDbModel())
+    } catch (e) {
+      if (e instanceof Dexie.DexieError) {
+        if (e.name === 'ConstraintError') {
+          logger.debug('Contact already exists:', e)
+          const existingContact = await contactDb.getContactByAddress(address)
+          return existingContact ? ContactSchema.fromDbModel(existingContact) : null
+        }
+      }
+    }
     // Request full profile for new contact, skip if type is ME
     if (client && type !== ContactType.ME) {
       await this.requestContact({
@@ -131,6 +127,7 @@ export class ContactService {
 
       // Convert the partial contact to a ContactSchema with existing data
       const updatedContact = new ContactSchema({
+        id: existingContact.id, // Preserve the original ID
         ...ContactSchema.fromDbModel(existingContact),
         ...contact,
         profileVersion: contact.profileVersion ?? uuidv4() // Only generate new profileVersion if not provided
@@ -211,8 +208,116 @@ export class ContactService {
     try {
       logger.debug('Sending contact request to', targetAddress, payload)
       await client.send(targetAddress, JSON.stringify(payload), { ...sendOptions })
+
+      // Update expiration time after successful request
+      const contactDb = new ContactDb(db)
+      const existingContact = await contactDb.getContactByAddress(targetAddress)
+      if (existingContact) {
+        await this.updateContact({
+          db,
+          contact: {
+            address: targetAddress,
+            profileExpiresAt: Date.now() + PROFILE_EXPIRATION_MS
+          }
+        })
+      }
     } catch (e) {
       logger.error('Failed to send contact request:', e)
+      throw e
+    }
+  }
+
+  static async responseContact({
+    client,
+    db,
+    address,
+    requestType,
+    version
+  }: {
+    client: MultiClient
+    db: Dexie
+    address: string
+    requestType: 'header' | 'full'
+    version?: string
+  }): Promise<void> {
+    if (!db) return
+
+    try {
+      const contactDb = new ContactDb(db)
+      const myContact = await contactDb.getContactByAddress(client.addr)
+
+      if (!myContact) {
+        throw new Error('My contact not found')
+      }
+
+      const contactSchema = ContactSchema.fromDbModel(myContact)
+      const now = Date.now()
+
+      // Get avatar data if exists
+      let avatarData = undefined
+      if (contactSchema.avatar) {
+        const cacheDb = new CacheDb(db)
+        const avatarCache = await cacheDb.get(contactSchema.avatar)
+        if (avatarCache?.source) {
+          const arrayBuffer = await avatarCache.source.arrayBuffer()
+          const base64 = Buffer.from(arrayBuffer).toString('base64')
+          avatarData = {
+            type: 'base64' as const,
+            data: base64,
+            ext: 'png'
+          }
+        }
+      }
+
+      // Create response payload
+      const payload = MessageService.createContactResponsePayload({
+        name: contactSchema.firstName ?? '',
+        avatar: avatarData ?? {
+          type: 'base64',
+          data: '',
+          ext: 'png'
+        },
+        responseType: requestType,
+        version: version ?? contactSchema.profileVersion ?? '0'
+      })
+
+      // Send response
+      logger.debug('Sending contact response to', address, payload)
+      await client.send(address, JSON.stringify(payload), { ...sendOptions })
+    } catch (e) {
+      logger.error('Failed to send contact response:', e)
+      throw e
+    }
+  }
+
+  static async receiveContactRequest({
+    client,
+    db,
+    address,
+    payload
+  }: {
+    client: MultiClient
+    db: Dexie
+    address: string
+    payload: IPayloadSchema & {
+      requestType: string
+      version: string
+    }
+  }): Promise<void> {
+    if (!db) return
+
+    try {
+      // Respond to the request
+      await this.responseContact({
+        client,
+        db,
+        address,
+        requestType: payload.requestType as 'header' | 'full'
+      })
+
+      logger.debug('Contact request processed:', address, payload.requestType)
+    } catch (e) {
+      logger.error('Failed to process contact request:', e)
       throw e
     }
   }
@@ -246,19 +351,17 @@ export class ContactService {
       const now = Date.now()
 
       if (payload.responseType === 'header') {
-        // For header response, only check version and expiration
+        // For header response, check version and update expiration
         if (existingContact) {
           const contactSchema = ContactSchema.fromDbModel(existingContact)
-          const isExpired = !contactSchema.profileExpiresAt || contactSchema.profileExpiresAt < now
           const isVersionDifferent = contactSchema.profileVersion !== payload.version
 
-          if (isExpired || isVersionDifferent) {
-            // Request full profile if expired or version is different
-            logger.debug('Profile expired or version different, requesting full profile:', {
+          if (isVersionDifferent) {
+            // Request full profile if version is different
+            logger.debug('Version different, requesting full profile:', {
               address,
               currentVersion: contactSchema.profileVersion,
-              newVersion: payload.version,
-              isExpired
+              newVersion: payload.version
             })
             await this.requestContact({
               client,
@@ -267,6 +370,15 @@ export class ContactService {
               requestType: 'full'
             })
             return
+          } else {
+            // Version matches, just update expiration time
+            await this.updateContact({
+              db,
+              contact: {
+                address,
+                profileExpiresAt: now + PROFILE_EXPIRATION_MS
+              }
+            })
           }
         } else {
           // No existing contact, request full profile

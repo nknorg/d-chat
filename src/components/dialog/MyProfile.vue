@@ -182,10 +182,6 @@ onBeforeMount(async () => {
     }
   } catch (error) {
     logger.error('Failed to load profile:', error)
-    notificationStore.error({
-      title: t('error'),
-      message: t('failed_to_load_profile')
-    })
   }
 })
 

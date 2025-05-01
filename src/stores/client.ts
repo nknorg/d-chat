@@ -1,7 +1,7 @@
 import { application } from '@/common/application'
 import { ServiceType } from '@/common/service'
 import { useContactStore } from '@/stores/contact'
-import { ConnectionStatus, Db } from '@d-chat/core'
+import { ConnectionStatus, Db, logger } from '@d-chat/core'
 import { Wallet } from 'nkn-sdk'
 import { defineStore } from 'pinia'
 
@@ -30,7 +30,7 @@ export const useClientStore = defineStore(STORE_NAME, {
       this.lastSignInId = await application.service.call(ServiceType.Connect, 'connect', seed)
       // get MyProfile
       const contactStore = useContactStore()
-      await contactStore.getMyProfile()
+      contactStore.getMyProfile().catch((err) => logger.error(err))
 
       return this.lastSignInId
     },

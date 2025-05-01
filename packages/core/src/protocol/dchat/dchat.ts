@@ -139,14 +139,14 @@ export class Dchat implements ChatProtocol {
     await ContactService.receiveContactResponse({ client: this.client, db: this.db, address: src, payload })
   }
 
-  async receiveContactRequestMessage(src: string, payload: IPayloadSchema & { requestType: string }) {
+  async receiveContactRequestMessage(src: string, payload: IPayloadSchema & { requestType: string; version: string }) {
     if (!payload.requestType) {
       return
     }
-    // TODO: handle contact request message
+    await ContactService.receiveContactRequest({ client: this.client, db: this.db, address: src, payload })
   }
 
-  async handleContact(message: MessageSchema) {}
+  async handleContact(message: MessageSchema) { }
 
   async handleTopic(message: MessageSchema) {
     const topic = message.payload.topic
@@ -234,7 +234,7 @@ export class Dchat implements ChatProtocol {
           break
         case MessageContentType.contactProfile:
           if ('requestType' in data) {
-            this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string }).catch((e) => {
+            this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string; version: string }).catch((e) => {
               logger.error('Failed to receive contact request message:', e)
             })
           } else if ('responseType' in data) {
@@ -488,9 +488,9 @@ export class Dchat implements ChatProtocol {
       offset?: number
       limit?: number
     } = {
-      offset: 0,
-      limit: 50
-    }
+        offset: 0,
+        limit: 50
+      }
   ): Promise<MessageSchema[]> {
     try {
       const messageDb = new MessageDb(this.db)
@@ -780,6 +780,9 @@ export class Dchat implements ChatProtocol {
       }
     }
     const localContact = await ContactService.getOrCreateContact({ db: this.db, address: this.client.addr, type: ContactType.ME })
+    if (address === this.client.addr) {
+      return localContact
+    }
     const version = localContact?.profileVersion ?? '0'
     return ContactService.getOrCreateContact({ client: this.client, db: this.db, address, type, version })
   }
