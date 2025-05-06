@@ -15,10 +15,7 @@
         </div>
       </Pane>
       <Pane>
-        <ChatContainer
-          :target-id="chatStore.currentTargetId"
-          :target-type="chatStore.currentTargetType"
-        />
+        <ChatContainer :target-id="chatStore.currentTargetId" :target-type="chatStore.currentTargetType" />
       </Pane>
     </Splitpanes>
   </v-card>

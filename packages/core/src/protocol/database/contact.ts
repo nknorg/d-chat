@@ -25,6 +25,8 @@ export interface IContactDb {
   update(model: ContactDbModel): Promise<void>
 
   getContactByAddress(address: string): Promise<ContactDbModel | null>
+
+  getContactList({ type, offset, limit }: { type?: ContactType; offset?: number; limit?: number }): Promise<ContactDbModel[]>
 }
 
 export class ContactDb implements IContactDb {
@@ -41,6 +43,23 @@ export class ContactDb implements IContactDb {
     } catch (e) {
       logger.error(e)
       return null
+    }
+  }
+
+  async getContactList({ type, offset = 0, limit = 50 }: { type?: ContactType; offset?: number; limit?: number }): Promise<ContactDbModel[]> {
+    try {
+      const table = this.db.table(ContactDb.tableName)
+
+      // Apply type filter if specified
+      const query = type !== undefined ? table.where('type').equals(type) : table
+
+      // Apply pagination
+      const contacts = await query.offset(offset).limit(limit).toArray()
+
+      return contacts
+    } catch (e) {
+      logger.error(e)
+      return []
     }
   }
 

@@ -2,7 +2,7 @@
   <v-skeleton-loader v-if="!item && !contactItem" type="avatar" color="transparent"></v-skeleton-loader>
   <v-avatar v-else :color="(item || contactItem)?.options?.avatarBgColor || 'primary'">
     <v-img v-if="avatarUrl" :src="avatarUrl" cover></v-img>
-    <span v-else class="text-h6" :style="{ color: (item || contactItem)?.options?.avatarFgColor || 'white' }">
+    <span v-else :style="{ color: (item || contactItem)?.options?.avatarFgColor || 'white' }">
       {{ displayName?.substring(0, 2).toUpperCase() }}
     </span>
   </v-avatar>

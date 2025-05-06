@@ -55,11 +55,7 @@ export class SessionDb implements ISessionDb {
 
   query(targetId: string, targetType: number): Promise<SessionDbModel | null> {
     try {
-      return this.db
-        .table(SessionDb.tableName)
-        .where(['target_id', 'target_type'])
-        .equals([targetId, targetType])
-        .first()
+      return this.db.table(SessionDb.tableName).where(['target_id', 'target_type']).equals([targetId, targetType]).first()
     } catch (e) {
       logger.error(e)
       return null
@@ -68,11 +64,7 @@ export class SessionDb implements ISessionDb {
 
   queryByTargetId(targetId: string): Promise<SessionDbModel | null> {
     try {
-      return this.db
-        .table(SessionDb.tableName)
-        .where('target_id')
-        .equals(targetId)
-        .first()
+      return this.db.table(SessionDb.tableName).where('target_id').equals(targetId).first()
     } catch (e) {
       logger.error(e)
       return null
@@ -81,10 +73,7 @@ export class SessionDb implements ISessionDb {
 
   queryListRecent(limit?: number, offset?: number): Promise<SessionDbModel[] | null> {
     try {
-      let query = this.db
-        .table(SessionDb.tableName)
-        .orderBy(['is_top', 'last_message_at'])
-        .reverse()
+      let query = this.db.table(SessionDb.tableName).orderBy(['is_top', 'last_message_at']).reverse()
 
       if (offset !== undefined) {
         query = query.offset(offset)

@@ -15,6 +15,8 @@ port.onMessage.addListener(function (msg) {
     if (chatStore.currentTargetId == msg.message.targetId) {
       messageStore.addMessage(msg.message)
     }
+  } else if (msg.method == 'updateMessage') {
+    messageStore.updateMessage(msg.message)
   } else if (msg.method == 'updateSession') {
     sessionStore.updateSession(msg.session)
   }

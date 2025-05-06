@@ -14,7 +14,7 @@ import { TopicSchema } from '../../schema/topic'
 import { StoreAdapter } from '../../store/storeAdapter'
 import { genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
-import { AddMessageHandler, ChatProtocol, UpdateSessionHandler } from '../ChatProtocol'
+import { AddMessageHandler, ChatProtocol, UpdateMessageHandler, UpdateSessionHandler } from '../ChatProtocol'
 import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
@@ -23,6 +23,7 @@ import { CacheService } from './cacheService'
 import { ContactService } from './contactService'
 import { MessageService, sendOptions } from './messageService'
 import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
+import { ContactDb } from '../database/contact'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -33,8 +34,9 @@ export class Dchat implements ChatProtocol {
   private _currentChatTargetId?: string
 
   private _addMessage?: AddMessageHandler
+  private _updateMessage?: UpdateMessageHandler
   private _updateSession?: UpdateSessionHandler
-
+  
   init() {
     this.client = Connect.getLastSignClient()
     this.db = StoreAdapter.db?.getLastOpenedDb()
@@ -65,7 +67,46 @@ export class Dchat implements ChatProtocol {
   }
 
   async receiveReceiptMessage(payloadId: string) {
-    // TODO: handle receipt message
+    try {
+      if (!this.db) return
+      const messageDb = new MessageDb(this.db)
+      const message = await messageDb.queryByPayloadId(payloadId)
+      if (message) {
+        const updateMessage = { ...message, status: MessageStatus.Receipt }
+        const latestMessage = await messageDb.updateWithTransaction(updateMessage)
+        if (latestMessage) {
+          // Notify frontend of message status update with latest data
+          this._updateMessage?.(MessageSchema.fromDbModel(latestMessage))
+        }
+      }
+    } catch (e) {
+      logger.error('Failed to handle receipt message:', e)
+    }
+  }
+
+  async receiveReadMessage(readIds: string[]) {
+    try {
+      if (!this.db) return
+      const messageDb = new MessageDb(this.db)
+
+      // Get all messages in one query
+      const messages = await messageDb.queryByPayloadIds(readIds)
+
+      // Update all messages in one transaction
+      if (messages.length > 0) {
+        const updateMessages = messages.map(message => ({
+          ...message,
+          status: MessageStatus.Read
+        }))
+        const latestMessages = await messageDb.batchUpdateStatusWithTransaction(updateMessages)
+        // Notify frontend of message status updates with latest data
+        for (const message of latestMessages) {
+          this._updateMessage?.(MessageSchema.fromDbModel(message))
+        }
+      }
+    } catch (e) {
+      logger.error('Failed to handle read message:', e)
+    }
   }
 
   async receiveTopicSubscribeMessage(src: string, topic: string) {
@@ -146,7 +187,15 @@ export class Dchat implements ChatProtocol {
     await ContactService.receiveContactRequest({ client: this.client, db: this.db, address: src, payload })
   }
 
-  async handleContact(message: MessageSchema) { }
+  async handleContact(message: MessageSchema) {
+    const sender = message.sender
+    if (!sender) {
+      return
+    }
+
+    // Get or create contact
+    await this.getOrCreateContact(sender, { type: ContactType.STRANGER })
+  }
 
   async handleTopic(message: MessageSchema) {
     const topic = message.payload.topic
@@ -169,6 +218,18 @@ export class Dchat implements ChatProtocol {
       // If topic needs sync or sender is not in subscribers list, sync the topic
       if (shouldSync || !existingSubscriber) {
         await this.syncTopicSubscribers(topic)
+      }
+    }
+
+    // For topic messages, mark as read if it's our own message
+    if (sender === this.client.addr) {
+      const messageDb = new MessageDb(this.db)
+      const existingMessage = await messageDb.queryByPayloadId(message.payload.id)
+      if (existingMessage) {
+        existingMessage.status = MessageStatus.Sent | MessageStatus.Receipt | MessageStatus.Read
+        await messageDb.update(existingMessage)
+        // Notify frontend of message status update
+        this._updateMessage?.(MessageSchema.fromDbModel(existingMessage))
       }
     }
   }
@@ -195,6 +256,7 @@ export class Dchat implements ChatProtocol {
       })
       if (payload.topic != null) {
         sessionType = SessionType.TOPIC
+        await this.handleContact(message)
         await this.handleTopic(message)
       } else if (payload.groupId != null) {
         sessionType = SessionType.PRIVATE_GROUP
@@ -206,11 +268,10 @@ export class Dchat implements ChatProtocol {
 
       switch (payload.contentType) {
         case MessageContentType.receipt:
-          messageStatus = MessageStatus.Receipt
           this.receiveReceiptMessage(data['targetID'])
           return
         case MessageContentType.read:
-          // TODO: handle read receipt
+          this.receiveReadMessage(data['readIds'])
           return
         case MessageContentType.text:
         case MessageContentType.image:
@@ -308,7 +369,37 @@ export class Dchat implements ChatProtocol {
   }
 
   async receipt(to: string, msgId: string) {
-    // TODO: handle receipt message
+    try {
+      if (!this.client?.isReady) {
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
+      }
+      const payload = MessageService.createReceiptPayload(msgId, { deviceId: this._deviceId })
+      await this.send(to, payload)
+    } catch (e) {
+      logger.error('Failed to send receipt:', e)
+    }
+  }
+
+  async read(to: string, readIds: string[]) {
+    try {
+      if (!this.client?.isReady) {
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
+      }
+      const payload = MessageService.createReadPayload(readIds, { deviceId: this._deviceId })
+      await this.send(to, payload)
+    } catch (e) {
+      logger.error('Failed to send read status:', e)
+    }
   }
 
   set addMessage(handler: AddMessageHandler) {
@@ -317,6 +408,14 @@ export class Dchat implements ChatProtocol {
 
   get addMessage() {
     return this._addMessage
+  }
+
+  set updateMessage(handler: UpdateMessageHandler) {
+    this._updateMessage = handler
+  }
+
+  get updateMessage() {
+    return this._updateMessage
   }
 
   set updateSession(handler: UpdateSessionHandler) {
@@ -416,14 +515,24 @@ export class Dchat implements ChatProtocol {
 
     let dest = [to]
     if (type == SessionType.TOPIC) {
-      // todo subscribes in cache
-      const subs = await this.client.getSubscribers(await genChannelId(to), {
-        limit: 1000,
-        offset: 0,
-        meta: false,
-        txPool: true
-      })
-      dest = [...(<string[]>subs.subscribers), ...(<string[]>subs.subscribersInTxPool)]
+      // First try to get subscribers from database
+      dest = await this.getTopicSubscribersFromDb(to)
+
+      // If database is not ready or no subscribers found, fetch from chain
+      if (!this.db || dest.length === 0) {
+        const subs = await this.client.getSubscribers(await genChannelId(to), {
+          limit: 1000,
+          offset: 0,
+          meta: false,
+          txPool: true
+        })
+        dest = [...(<string[]>subs.subscribers), ...(<string[]>subs.subscribersInTxPool)]
+
+        // If database is ready, sync the subscribers
+        if (this.db) {
+          await this.syncTopicSubscribers(to)
+        }
+      }
       logger.debug('topic subscribers', dest)
       try {
         await this.client.send(dest, message.payload.toData(), {
@@ -455,10 +564,10 @@ export class Dchat implements ChatProtocol {
     return message
   }
 
-  async getSessionList(limit: number = 20, skip: number = 0): Promise<SessionSchema[]> {
+  async getSessionList(limit: number = 20, offset: number = 0): Promise<SessionSchema[]> {
     try {
       const sessionDb = new SessionDb(this.db)
-      const list = await sessionDb.queryListRecent(limit, skip)
+      const list = await sessionDb.queryListRecent(limit, offset)
       if (list) {
         return list.map((item) => SessionSchema.fromDbModel(item))
       }
@@ -488,9 +597,9 @@ export class Dchat implements ChatProtocol {
       offset?: number
       limit?: number
     } = {
-        offset: 0,
-        limit: 50
-      }
+      offset: 0,
+      limit: 50
+    }
   ): Promise<MessageSchema[]> {
     try {
       const messageDb = new MessageDb(this.db)
@@ -507,12 +616,53 @@ export class Dchat implements ChatProtocol {
   async readAllMessagesByTargetId(targetId: string, targetType: SessionType): Promise<void> {
     try {
       const messageDb = new MessageDb(this.db)
-      await messageDb.updateStatusByTargetId(targetId, targetType, MessageStatus.Read)
+      // Get all unread received messages
+      const messages = await messageDb.getUnreadMessages(targetId, targetType)
+      if (messages.length > 0) {
+        // Group messages by sender
+        const messagesBySender = new Map<string, string[]>()
+        for (const message of messages) {
+          const sender = message.sender
+          if (!messagesBySender.has(sender)) {
+            messagesBySender.set(sender, [])
+          }
+          messagesBySender.get(sender)?.push(message.payload_id)
+        }
+
+        // Send read protocol messages to each sender
+        for (const [sender, payloadIds] of messagesBySender) {
+          const payload = MessageService.createReadPayload(payloadIds, { deviceId: this._deviceId })
+          await this.send(sender, payload)
+        }
+
+        // Update local message status
+        await messageDb.updateReceivedMessagesStatusByTargetId(targetId, targetType, MessageStatus.Read)
+      }
+
       const sessionDb = new SessionDb(this.db)
       const record = await sessionDb.query(targetId, targetType)
       if (record) {
         record.un_read_count = 0
         await sessionDb.update(record)
+      }
+    } catch (e) {
+      logger.error(e)
+    }
+  }
+
+  async readMessageById(msgId: string): Promise<void> {
+    try {
+      const messageDb = new MessageDb(this.db)
+      const message = await messageDb.queryByPayloadId(msgId)
+      if (!message) return
+
+      // Update local message status
+      await messageDb.updateStatusByPayloadId(msgId, MessageStatus.Read)
+
+      // Send read protocol message to the sender
+      if (!message.is_outbound) {
+        const payload = MessageService.createReadPayload([msgId], { deviceId: this._deviceId })
+        await this.send(message.sender, payload)
       }
     } catch (e) {
       logger.error(e)
@@ -759,15 +909,46 @@ export class Dchat implements ChatProtocol {
 
   // Contact
   async getContactByAddress(address: string): Promise<ContactSchema | null> {
-    return Promise.resolve(undefined)
+    if (!address || !this.db) {
+      return null
+    }
+
+    try {
+      const contactDb = new ContactDb(this.db)
+      const contact = await contactDb.getContactByAddress(address)
+      return contact ? ContactSchema.fromDbModel(contact) : null
+    } catch (e) {
+      logger.error('Failed to get contact by address:', e)
+      return null
+    }
   }
 
-  async getContactList(): Promise<string[]> {
-    return Promise.resolve([])
+  async getContactList({ type, offset = 0, limit = 50 }: { type?: ContactType; offset?: number; limit?: number }): Promise<string[]> {
+    try {
+      const contactDb = new ContactDb(this.db)
+      const contacts = await contactDb.getContactList({ type, offset, limit })
+      return contacts.map((contact) => contact.address)
+    } catch (e) {
+      logger.error('Failed to get contact list:', e)
+      return []
+    }
   }
 
-  async requestContactData(address: string): Promise<void> {
-    return Promise.resolve(undefined)
+  async requestContactData(address: string, requestType: 'header' | 'full' = 'full'): Promise<void> {
+    if (!address || !this.client?.isReady || !this.db) {
+      return
+    }
+
+    try {
+      await ContactService.requestContact({
+        client: this.client,
+        db: this.db,
+        address: address,
+        requestType: requestType
+      })
+    } catch (e) {
+      logger.error('Failed to request contact data:', e)
+    }
   }
 
   async getOrCreateContact(address: string, { type }: { type?: ContactType }): Promise<ContactSchema | null> {

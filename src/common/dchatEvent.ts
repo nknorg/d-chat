@@ -13,6 +13,12 @@ export function addDchatEvents(ins: Dchat) {
     }
   }
 
+  ins.updateMessage = (message: MessageSchema) => {
+    if (chatStore.currentTargetId == message.targetId) {
+      messageStore.updateMessage(message)
+    }
+  }
+
   ins.updateSession = (session: SessionSchema) => {
     sessionStore.updateSession(session)
   }

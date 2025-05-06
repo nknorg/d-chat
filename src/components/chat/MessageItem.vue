@@ -25,11 +25,27 @@
     <MessageContent :message="props.message" />
     <div class="footer">
       <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
+      <div class="check-icons">
+        <Icon
+          v-if="props.message.status & MessageStatus.Sent"
+          class="check-icon"
+          :icon="props.message.status & MessageStatus.Read ? 'material-symbols:check-circle-rounded' : 'material-symbols:check-circle-outline-rounded'"
+        />
+        <div v-if="props.message.status & MessageStatus.Receipt" class="check-icon-wrapper">
+          <v-avatar size="16" color="green">
+            <Icon
+              class="check-icon"
+              :icon="props.message.status & MessageStatus.Read ? 'material-symbols:check-circle-rounded' : 'material-symbols:check-circle-outline-rounded'"
+            />
+          </v-avatar>
+        </div>
+      </div>
     </div>
   </v-alert>
 </template>
 <script setup lang="ts">
-import { MessageContentType, MessageSchema, SessionType, ContactSchema, ContactService } from '@d-chat/core'
+import { MessageContentType, MessageSchema, SessionType, ContactSchema, ContactService, MessageStatus } from '@d-chat/core'
+import { Icon } from '@iconify/vue'
 import { defineProps, ref, onMounted } from 'vue'
 import { formatChatTime } from '@/utils/format'
 import { useContactStore } from '@/stores/contact'
@@ -75,5 +91,33 @@ onMounted(async () => {
 .footer {
   display: flex;
   justify-content: end;
+  align-items: center;
+}
+
+.check-icons {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+  width: auto;
+  height: 16px;
+}
+
+.check-icons:has(.check-icon-wrapper) {
+  width: 24px;
+}
+
+.check-icon {
+  font-size: 14px;
+  color: white;
+}
+
+.check-icon-wrapper {
+  position: absolute;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

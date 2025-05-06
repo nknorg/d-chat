@@ -35,6 +35,25 @@ export class MessageService {
     return this.fillPayloadFields({ content }, options)
   }
 
+  static createReceiptPayload(msgId: string, options?: MessageOptions): IPayloadSchema & { targetID: string } {
+    return {
+      ...this.fillPayloadFields({
+        contentType: MessageContentType.receipt
+      }),
+      targetID: msgId,
+      ...options
+    }
+  }
+
+  static createReadPayload(readIds: string[], options?: MessageOptions): IPayloadSchema & { readIds: string[] } {
+    return {
+      ...this.fillPayloadFields({
+        contentType: MessageContentType.read
+      }),
+      readIds,
+      ...options
+    }
+  }
   static createTopicSubscribePayload(topic: string): IPayloadSchema {
     return this.fillPayloadFields({
       contentType: MessageContentType.topicSubscribe,

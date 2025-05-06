@@ -1,6 +1,7 @@
 import Dexie from 'dexie'
 import { SessionType } from '../../schema/sessionEnum'
 import { logger } from '../../utils/log'
+import { MessageStatus } from '../../schema/messageEnum'
 
 export interface MessageDbModel {
   id?: number
@@ -33,6 +34,10 @@ export interface IMessageDb {
 
   queryByPayloadId(payloadId: string): Promise<MessageDbModel | undefined>
 
+  queryByPayloadIds(payloadIds: string[]): Promise<MessageDbModel[]>
+
+  batchUpdateStatus(messages: MessageDbModel[]): Promise<void>
+
   queryByTargetId(
     targetId: string,
     targetType: SessionType,
@@ -55,6 +60,12 @@ export interface IMessageDb {
   ): Promise<MessageDbModel[]>
 
   updateStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void>
+
+  updateReceivedMessagesStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void>
+
+  updateStatusByPayloadId(payloadId: string, status: number): Promise<void>
+
+  getUnreadMessages(targetId: string, targetType: SessionType): Promise<MessageDbModel[]>
 }
 
 export class MessageDb implements IMessageDb {
@@ -165,6 +176,113 @@ export class MessageDb implements IMessageDb {
         .modify((item) => {
           item.status = item.status | status
         })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async queryByPayloadIds(payloadIds: string[]): Promise<MessageDbModel[]> {
+    try {
+      return await this.db.table(MessageDb.tableName)
+        .where('payload_id')
+        .anyOf(payloadIds)
+        .toArray()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async batchUpdateStatus(messages: MessageDbModel[]): Promise<void> {
+    try {
+      await this.db.transaction('rw', MessageDb.tableName, async () => {
+        for (const message of messages) {
+          await this.db.table(MessageDb.tableName).put(message)
+        }
+      })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async updateReceivedMessagesStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void> {
+    try {
+      await this.db.table(MessageDb.tableName)
+        .where(['target_id', 'target_type', 'is_outbound'])
+        .equals([targetId, targetType, 0])
+        .modify((item) => {
+          item.status = item.status | status
+        })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async updateStatusByPayloadId(payloadId: string, status: number): Promise<void> {
+    try {
+      await this.db
+        .table(MessageDb.tableName)
+        .where('payload_id')
+        .equals(payloadId)
+        .modify((item) => {
+          item.status = item.status | status
+        })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getUnreadMessages(targetId: string, targetType: SessionType): Promise<MessageDbModel[]> {
+    try {
+      return await this.db
+        .table(MessageDb.tableName)
+        .where(['target_id', 'target_type', 'is_outbound', 'is_delete'])
+        .equals([targetId, targetType, 0, 0])
+        .and((item) => item.status < MessageStatus.Read)
+        .toArray()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async updateWithTransaction(message: MessageDbModel): Promise<MessageDbModel | undefined> {
+    try {
+      return await this.db.transaction('rw', MessageDb.tableName, async () => {
+        const existingMessage = await this.queryByPayloadId(message.payload_id)
+        if (existingMessage) {
+          existingMessage.status = existingMessage.status | message.status
+          await this.update(existingMessage)
+          return existingMessage
+        }
+        return undefined
+      })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async batchUpdateStatusWithTransaction(messages: MessageDbModel[]): Promise<MessageDbModel[]> {
+    try {
+      return await this.db.transaction('rw', MessageDb.tableName, async () => {
+        const existingMessages = await this.queryByPayloadIds(messages.map(m => m.payload_id))
+        if (existingMessages.length > 0) {
+          for (const message of existingMessages) {
+            const updateMessage = messages.find(m => m.payload_id === message.payload_id)
+            if (updateMessage) {
+              message.status = message.status | updateMessage.status
+            }
+          }
+          await this.batchUpdateStatus(existingMessages)
+          return existingMessages
+        }
+        return []
+      })
     } catch (e) {
       logger.error(e)
       throw e

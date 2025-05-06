@@ -13,6 +13,9 @@ ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
   services[ServiceType.dchat].addMessage = (message: MessageSchema) => {
     dchatEventEmitter.emit('addMessage', message)
   }
+  services[ServiceType.dchat].updateMessage = (message: MessageSchema) => {
+    dchatEventEmitter.emit('updateMessage', message)
+  }
   services[ServiceType.dchat].updateSession = (session: SessionSchema) => {
     dchatEventEmitter.emit('updateSession', session)
   }

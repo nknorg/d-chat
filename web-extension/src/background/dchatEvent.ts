@@ -19,6 +19,13 @@ chrome.runtime.onConnect.addListener((port) => {
       }
     }
 
+    const updateMessageHandler = (message: MessageSchema) => {
+      const connectPort = connectedPorts.get(port.sender!.url!)
+      if (connectPort) {
+        connectPort.postMessage({ method: 'updateMessage', message })
+      }
+    }
+
     const updateSessionHandler = (session: SessionSchema) => {
       const connectPort = connectedPorts.get(port.sender!.url!)
       if (connectPort) {
@@ -27,10 +34,12 @@ chrome.runtime.onConnect.addListener((port) => {
     }
 
     dchatEventEmitter.on('addMessage', addMessageHandler)
+    dchatEventEmitter.on('updateMessage', updateMessageHandler)
     dchatEventEmitter.on('updateSession', updateSessionHandler)
 
     port.onDisconnect.addListener(() => {
       dchatEventEmitter.off('addMessage', addMessageHandler)
+      dchatEventEmitter.off('updateMessage', updateMessageHandler)
       dchatEventEmitter.off('updateSession', updateSessionHandler)
       connectedPorts.delete(port.sender!.url!)
     })
