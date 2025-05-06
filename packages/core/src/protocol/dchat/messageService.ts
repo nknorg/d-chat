@@ -1,15 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 import nkn from 'nkn-sdk'
 import { MessageContentType } from '../../schema/messageEnum'
-import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
+import { IPayloadSchema, MediaOptions, PayloadOptions } from '../../schema/payload'
 
-export interface MessageOptions {
+export interface MessageBody {
   id?: string
   type?: MessageContentType
   topic?: string
   groupId?: string
   deviceId?: string
   timestamp?: number
+  options?: PayloadOptions
 }
 
 export const sendOptions = { noReply: true, msgHoldingSeconds: 8640000 }
@@ -19,41 +20,54 @@ export class MessageService {
     return nkn.util.randomBytes(8)
   }
 
-  private static fillPayloadFields(basePayload: Partial<IPayloadSchema>, options?: MessageOptions): IPayloadSchema {
+  private static fillPayloadFields(basePayload: Partial<IPayloadSchema>, body?: MessageBody, options?: Partial<PayloadOptions>): IPayloadSchema {
     return {
-      id: options?.id ?? uuidv4(),
-      timestamp: options?.timestamp ?? Date.now(),
-      contentType: options?.type ?? MessageContentType.text,
+      id: body?.id ?? uuidv4(),
+      timestamp: body?.timestamp ?? Date.now(),
+      contentType: body?.type ?? MessageContentType.text,
       ...basePayload,
-      ...(options?.deviceId ? { deviceId: options.deviceId } : {}),
-      ...(options?.topic ? { topic: options.topic } : {}),
-      ...(options?.groupId ? { groupId: options.groupId } : {})
+      ...(body?.deviceId ? { deviceId: body.deviceId } : {}),
+      ...(body?.topic ? { topic: body.topic } : {}),
+      ...(body?.groupId ? { groupId: body.groupId } : {}),
+      ...(options ? { options } : {})
     }
   }
 
-  static createTextPayload(content: string, options?: MessageOptions): IPayloadSchema {
-    return this.fillPayloadFields({ content }, options)
+  static createTextPayload(content: string, body?: MessageBody): IPayloadSchema {
+    return this.fillPayloadFields({ content }, body)
   }
 
-  static createReceiptPayload(msgId: string, options?: MessageOptions): IPayloadSchema & { targetID: string } {
+  static createAudioPayload(data: string, body?: MessageBody, options?: MediaOptions): IPayloadSchema {
+    return this.fillPayloadFields(
+      {
+        contentType: MessageContentType.audio,
+        content: `![audio](${data})`
+      },
+      body,
+      options as Partial<PayloadOptions>
+    )
+  }
+
+  static createReceiptPayload(msgId: string, body?: MessageBody): IPayloadSchema & { targetID: string } {
     return {
       ...this.fillPayloadFields({
         contentType: MessageContentType.receipt
       }),
       targetID: msgId,
-      ...options
+      ...body
     }
   }
 
-  static createReadPayload(readIds: string[], options?: MessageOptions): IPayloadSchema & { readIds: string[] } {
+  static createReadPayload(readIds: string[], body?: MessageBody): IPayloadSchema & { readIds: string[] } {
     return {
       ...this.fillPayloadFields({
         contentType: MessageContentType.read
       }),
       readIds,
-      ...options
+      ...body
     }
   }
+
   static createTopicSubscribePayload(topic: string): IPayloadSchema {
     return this.fillPayloadFields({
       contentType: MessageContentType.topicSubscribe,

@@ -2,7 +2,14 @@ import { v4 as uuidv4 } from 'uuid'
 import { logger } from '../utils/log'
 import { MessageContentType } from './messageEnum'
 
-export interface PayloadOptions {
+export interface MediaOptions {
+  fileExt: string
+  fileType: number
+  mediaDuration: number
+  audioDuration: number
+}
+
+export interface PayloadOptions extends Partial<MediaOptions> {
   profileVersion?: string
 }
 

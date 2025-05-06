@@ -5,7 +5,7 @@ import { ContactSchema, IContactSchema } from '../../schema/contact'
 import { ContactType } from '../../schema/contactEnum'
 import { MessageSchema } from '../../schema/message'
 import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
-import { IPayloadSchema, PayloadSchema } from '../../schema/payload'
+import { IPayloadSchema, MediaOptions, PayloadSchema } from '../../schema/payload'
 import { SessionSchema } from '../../schema/session'
 import { SessionType } from '../../schema/sessionEnum'
 import { SubscriberSchema } from '../../schema/subscriber'
@@ -15,6 +15,7 @@ import { StoreAdapter } from '../../store/storeAdapter'
 import { genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
 import { AddMessageHandler, ChatProtocol, UpdateMessageHandler, UpdateSessionHandler } from '../ChatProtocol'
+import { ContactDb } from '../database/contact'
 import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
@@ -23,7 +24,6 @@ import { CacheService } from './cacheService'
 import { ContactService } from './contactService'
 import { MessageService, sendOptions } from './messageService'
 import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
-import { ContactDb } from '../database/contact'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -36,7 +36,7 @@ export class Dchat implements ChatProtocol {
   private _addMessage?: AddMessageHandler
   private _updateMessage?: UpdateMessageHandler
   private _updateSession?: UpdateSessionHandler
-  
+
   init() {
     this.client = Connect.getLastSignClient()
     this.db = StoreAdapter.db?.getLastOpenedDb()
@@ -72,7 +72,11 @@ export class Dchat implements ChatProtocol {
       const messageDb = new MessageDb(this.db)
       const message = await messageDb.queryByPayloadId(payloadId)
       if (message) {
-        const updateMessage = { ...message, status: MessageStatus.Receipt }
+        const updateMessage = {
+          ...message,
+          status: MessageStatus.Receipt,
+          received_at: Date.now()
+        }
         const latestMessage = await messageDb.updateWithTransaction(updateMessage)
         if (latestMessage) {
           // Notify frontend of message status update with latest data
@@ -94,7 +98,7 @@ export class Dchat implements ChatProtocol {
 
       // Update all messages in one transaction
       if (messages.length > 0) {
-        const updateMessages = messages.map(message => ({
+        const updateMessages = messages.map((message) => ({
           ...message,
           status: MessageStatus.Read
         }))
@@ -227,6 +231,7 @@ export class Dchat implements ChatProtocol {
       const existingMessage = await messageDb.queryByPayloadId(message.payload.id)
       if (existingMessage) {
         existingMessage.status = MessageStatus.Sent | MessageStatus.Receipt | MessageStatus.Read
+        existingMessage.received_at = Date.now()
         await messageDb.update(existingMessage)
         // Notify frontend of message status update
         this._updateMessage?.(MessageSchema.fromDbModel(existingMessage))
@@ -254,6 +259,11 @@ export class Dchat implements ChatProtocol {
       const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr, {
         isOutbound: raw.src === this.client.addr
       })
+      // Set received time for incoming messages
+      if (!message.isOutbound) {
+        message.receivedAt = Date.now()
+      }
+
       if (payload.topic != null) {
         sessionType = SessionType.TOPIC
         await this.handleContact(message)
@@ -276,6 +286,7 @@ export class Dchat implements ChatProtocol {
         case MessageContentType.text:
         case MessageContentType.image:
         case MessageContentType.video:
+        case MessageContentType.audio:
         case MessageContentType.file:
           if (sessionType == SessionType.CONTACT) {
             this.receipt(raw.src, payload.id)
@@ -484,26 +495,11 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema> {
-    if (!this.client?.isReady) {
-      try {
-        await Connect.waitForConnect()
-      } catch (e) {
-        logger.error(e)
-        throw e
-      }
-    }
-    const payload = new PayloadSchema(MessageService.createTextPayload(msg, { deviceId: this._deviceId }))
-    if (type == SessionType.TOPIC) {
-      payload.topic = to
-    } else if (type == SessionType.PRIVATE_GROUP) {
-      payload.groupId = to
-    }
-
+  private async sendMessage(type: SessionType, to: string, payload: PayloadSchema, messageId: Uint8Array): Promise<MessageSchema> {
     const message = new MessageSchema({
       deviceId: this._deviceId ?? '',
       isOutbound: true,
-      messageId: MessageService.createMessageId(),
+      messageId: messageId,
       payload: payload,
       receiver: to,
       sender: this.client.addr,
@@ -562,6 +558,44 @@ export class Dchat implements ChatProtocol {
       await this.handleSession(record)
     }
     return message
+  }
+
+  async sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema> {
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
+    }
+    const payload = new PayloadSchema(MessageService.createTextPayload(msg, { deviceId: this._deviceId }))
+    if (type == SessionType.TOPIC) {
+      payload.topic = to
+    } else if (type == SessionType.PRIVATE_GROUP) {
+      payload.groupId = to
+    }
+
+    return this.sendMessage(type, to, payload, MessageService.createMessageId())
+  }
+
+  async sendAudio(type: SessionType, to: string, data: string, options?: MediaOptions): Promise<MessageSchema> {
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
+    }
+    const payload = new PayloadSchema(MessageService.createAudioPayload(data, { deviceId: this._deviceId }, options))
+    if (type == SessionType.TOPIC) {
+      payload.topic = to
+    } else if (type == SessionType.PRIVATE_GROUP) {
+      payload.groupId = to
+    }
+
+    return this.sendMessage(type, to, payload, MessageService.createMessageId())
   }
 
   async getSessionList(limit: number = 20, offset: number = 0): Promise<SessionSchema[]> {

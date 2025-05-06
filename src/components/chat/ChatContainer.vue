@@ -19,14 +19,22 @@
           <svg-icon name="grid" :size="28" />
           <v-menu activator="parent" transition="fade-transition" location="top center">
             <v-card class="d-flex flex-0-0 mt-0 ma-4 pa-4">
-              <v-btn icon color="blue" size="48" @click="sendImage">
-                <svg-icon name="image" :size="28" />
-              </v-btn>
+              <v-row>
+                <v-col>
+                  <v-btn icon color="blue" size="48" @click="sendImage">
+                    <svg-icon name="image" :size="28" />
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card>
           </v-menu>
         </v-btn>
       </div>
-      <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown"></v-textarea>
+      <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown">
+        <template #prepend-inner>
+          <AudioRecorder @recorded="handleAudioRecorded" />
+        </template>
+      </v-textarea>
       <div class="align-self-end ml-2">
         <v-btn icon color="blue" size="48" @click="send">
           <svg-icon name="send" :size="28" />
@@ -39,7 +47,7 @@
 import { useChatStore } from '@/stores/chat'
 import { useContactStore } from '@/stores/contact'
 import { useMessageStore } from '@/stores/message'
-import { IMessageSchema, SessionType } from '@d-chat/core'
+import { FileType, IMessageSchema, MediaOptions, SessionType } from '@d-chat/core'
 import { ComponentPublicInstance, defineProps, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import SvgIcon from '../SvgIcon.vue'
 import MessageItem from './MessageItem.vue'
@@ -127,7 +135,7 @@ watch(
 
 async function init() {
   if (props.targetId == null || props.targetType == null) return
-
+  state.message = ''
   await chatStore.setCurrentChatTargetId(props.targetId)
 
   contactStore.queryContactInfo({ type: props.targetType, address: props.targetId })
@@ -143,6 +151,57 @@ async function send() {
   if (msg == '') return
   state.message = ''
   await chatStore.sendText(props.targetType ?? SessionType.CONTACT, props.targetId, msg)
+}
+
+async function sendAudio(data: string, options: MediaOptions) {
+  if (!props.targetId || !props.targetType) return
+
+  // Convert Blob to base64
+  const reader = new FileReader()
+  const base64Promise = new Promise<string>((resolve) => {
+    reader.onloadend = () => {
+      const base64data = reader.result as string
+      resolve(base64data)
+    }
+  })
+  reader.readAsDataURL(data)
+
+  const base64data = await base64Promise
+
+  // console.log('base64data', base64data)
+  console.log('duration', options.audioDuration)
+
+  // Send audio message
+  await chatStore.sendAudio(props.targetType, props.targetId, base64data, {
+    fileExt: 'aac',
+    fileType: FileType.AUDIO,
+    audioDuration: options.audioDuration,
+    mediaDuration: options.mediaDuration
+  })
+}
+
+async function handleAudioRecorded(audioBlob: Blob, duration: number, fileExt: string) {
+  if (!props.targetId || !props.targetType) return
+
+  // Convert Blob to base64
+  const reader = new FileReader()
+  const base64Promise = new Promise<string>((resolve) => {
+    reader.onloadend = () => {
+      const base64data = reader.result as string
+      resolve(base64data)
+    }
+  })
+  reader.readAsDataURL(audioBlob)
+
+  const base64data = await base64Promise
+  console.log('base64data', base64data)
+  // Send audio message
+  await chatStore.sendAudio(props.targetType, props.targetId, base64data, {
+    fileExt,
+    fileType: FileType.AUDIO,
+    audioDuration: duration,
+    mediaDuration: duration
+  })
 }
 
 function handleKeydown(e) {

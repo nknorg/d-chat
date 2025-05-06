@@ -2,7 +2,7 @@ import { CacheSchema } from '../schema/cache'
 import { ContactSchema, IContactSchema } from '../schema/contact'
 import { ContactType } from '../schema/contactEnum'
 import { MessageSchema } from '../schema/message'
-import { IPayloadSchema } from '../schema/payload'
+import { IPayloadSchema, MediaOptions } from '../schema/payload'
 import { SessionSchema } from '../schema/session'
 import { SessionType } from '../schema/sessionEnum'
 import { TopicSchema } from '../schema/topic'
@@ -51,6 +51,16 @@ export interface ChatProtocol {
    * @returns Promise resolving to the sent message schema
    */
   sendText(type: SessionType, to: string, msg: string): Promise<MessageSchema>
+
+  /**
+   * Sends an audio message to a specific destination
+   * @param type - The type of session
+   * @param to - The destination address
+   * @param data - The audio data in base64 format
+   * @param options - Optional payload options
+   * @returns Promise resolving to the sent message schema
+   */
+  sendAudio(type: SessionType, to: string, data: string, options?: MediaOptions): Promise<MessageSchema>
 
   /**
    * Sends a receipt message to a specific destination

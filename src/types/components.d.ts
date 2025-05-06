@@ -8,6 +8,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AudioMessage: typeof import('./../components/chat/contentType/AudioMessage.vue')['default']
+    AudioRecorder: typeof import('./../components/chat/contentType/AudioRecorder.vue')['default']
     ChatContainer: typeof import('./../components/chat/ChatContainer.vue')['default']
     ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
     ContactAvatar: typeof import('./../components/contact/ContactAvatar.vue')['default']

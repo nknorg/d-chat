@@ -256,6 +256,7 @@ export class MessageDb implements IMessageDb {
         const existingMessage = await this.queryByPayloadId(message.payload_id)
         if (existingMessage) {
           existingMessage.status = existingMessage.status | message.status
+          existingMessage.received_at = message.received_at
           await this.update(existingMessage)
           return existingMessage
         }
