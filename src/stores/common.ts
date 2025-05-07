@@ -1,5 +1,15 @@
-import { localStorage } from '@d-chat/core'
+import { StoreAdapter } from '@d-chat/core'
 import { defineStore } from 'pinia'
+import { v4 as uuidv4 } from 'uuid'
+
+let localStorage
+if (process.env.__APP_PLATFORM__ == 'electron') {
+} else if (process.env.__APP_PLATFORM__ == 'webext') {
+  const module = await import('../../web-extension/src/chromeStorage')
+  localStorage = new module.ChromeStorage('local')
+} else {
+  localStorage = StoreAdapter.localStorage
+}
 
 export const useCommonStore = defineStore('common', {
   state: (): { versions: any; deviceId: string } => {
@@ -15,7 +25,7 @@ export const useCommonStore = defineStore('common', {
     async getDeviceId() {
       let deviceId: string = (await localStorage.get(`deviceId`)) as string
       if (!deviceId) {
-        deviceId = crypto.randomUUID().toString()
+        deviceId = uuidv4()
         await localStorage.set(`deviceId`, deviceId)
       }
       this.deviceId = deviceId

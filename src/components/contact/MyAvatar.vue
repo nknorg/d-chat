@@ -1,22 +1,27 @@
 <template>
   <v-card elevation="0" class="mx-auto" density="compact">
     <template #title>
-      {{ contactStore?.myProfile?.displayName }}
+      <template v-if="contactStore?.myProfile">
+        {{ contactStore.myProfile.displayName ?? ContactService.getNameByContact(contactStore.myProfile) }}
+      </template>
+      <template v-else>
+        <v-skeleton-loader type="text" width="120" color="transparent"></v-skeleton-loader>
+      </template>
     </template>
     <template #prepend>
       <div class="position-relative">
         <v-avatar v-if="avatarUrl" size="40">
           <v-img :src="avatarUrl" cover></v-img>
         </v-avatar>
-        <v-icon v-else size="40" icon="mdi-account-circle"></v-icon>
+        <v-skeleton-loader v-else type="avatar" width="40" height="40" color="transparent"></v-skeleton-loader>
         <div v-if="clientStore.connectStatus == ConnectionStatus.Connecting" class="position-absolute right-0 top-0 text-warning">
-          <Icon style="position: relative; left: 7px; bottom: 5px" width="24" icon="svg-spinners:bouncing-ball" />
+          <Icon style="position: relative; left: 9px; bottom: 5px" width="24" icon="svg-spinners:bouncing-ball" />
         </div>
         <div v-else-if="clientStore.connectStatus == ConnectionStatus.Connected" class="position-absolute right-0 top-0 text-success">
-          <Icon style="position: absolute; right: 0; top: 4px" width="10" height="10" icon="mdi:circle" />
+          <Icon style="position: absolute; right: -2px; top: 2px" width="10" height="10" icon="mdi:circle" />
         </div>
         <div v-else-if="clientStore.connectStatus == ConnectionStatus.Disconnected" class="position-absolute right-0 top-0 text-grey">
-          <Icon style="position: absolute; right: 0; top: 4px" width="10" height="10" icon="mdi:circle" />
+          <Icon style="position: absolute; right: -2px; top: 2px" width="10" height="10" icon="mdi:circle" />
         </div>
       </div>
     </template>
@@ -32,7 +37,7 @@
 import { useCacheStore } from '@/stores/cache'
 import { useClientStore } from '@/stores/client'
 import { useContactStore } from '@/stores/contact'
-import { ConnectionStatus } from '@d-chat/core'
+import { ConnectionStatus, ContactService } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 

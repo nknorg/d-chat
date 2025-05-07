@@ -32,7 +32,20 @@
       </div>
       <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown">
         <template #prepend-inner>
-          <AudioRecorder @recorded="handleAudioRecorded" />
+          <AudioRecorder @recorded="handleAudioRecorded" @recording-started="clearAudioPreview" />
+          <v-chip v-if="state.audioPreview.blob" label>
+            <div class="audio-message">
+              <div class="audio-player">
+                <v-btn icon density="compact" size="small" :color="state.audioPreview.isPlaying ? 'red' : 'purple'" class="play-button" @click="toggleAudioPreview">
+                  <v-icon>{{ state.audioPreview.isPlaying ? 'mdi-stop' : 'mdi-play' }}</v-icon>
+                </v-btn>
+                <span class="ml-2">{{ formatDuration(state.audioPreview.duration) }}</span>
+                <v-btn icon density="compact" size="small" color="grey" class="ml-2" @click="clearAudioPreview">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </div>
+            </div>
+          </v-chip>
         </template>
       </v-textarea>
       <div class="align-self-end ml-2">
@@ -68,13 +81,25 @@ const state = reactive<{
   isLoadingMore: boolean
   messageCount: number
   hasReachedEarliest: boolean
+  audioPreview: {
+    blob: Blob | null
+    duration: number
+    fileExt: string
+    isPlaying: boolean
+  }
 }>({
   messages: [],
   message: '',
   showScrollToBottom: false,
   isLoadingMore: false,
   messageCount: 20,
-  hasReachedEarliest: false
+  hasReachedEarliest: false,
+  audioPreview: {
+    blob: null,
+    duration: 0,
+    fileExt: '',
+    isPlaying: false
+  }
 })
 
 const messageContainer = ref<ComponentPublicInstance | null>(null)
@@ -147,13 +172,23 @@ async function init() {
 }
 
 async function send() {
-  let msg = state.message
-  if (msg == '') return
-  state.message = ''
-  await chatStore.sendText(props.targetType ?? SessionType.CONTACT, props.targetId, msg)
+  if (state.audioPreview.blob) {
+    await sendAudio(state.audioPreview.blob, {
+      fileExt: state.audioPreview.fileExt,
+      fileType: FileType.AUDIO,
+      audioDuration: state.audioPreview.duration,
+      mediaDuration: state.audioPreview.duration
+    })
+    clearAudioPreview()
+  } else {
+    let msg = state.message
+    if (msg == '') return
+    state.message = ''
+    await chatStore.sendText(props.targetType ?? SessionType.CONTACT, props.targetId, msg)
+  }
 }
 
-async function sendAudio(data: string, options: MediaOptions) {
+async function sendAudio(data: Blob, options: MediaOptions) {
   if (!props.targetId || !props.targetType) return
 
   // Convert Blob to base64
@@ -168,12 +203,9 @@ async function sendAudio(data: string, options: MediaOptions) {
 
   const base64data = await base64Promise
 
-  // console.log('base64data', base64data)
-  console.log('duration', options.audioDuration)
-
   // Send audio message
   await chatStore.sendAudio(props.targetType, props.targetId, base64data, {
-    fileExt: 'aac',
+    fileExt: options.fileExt,
     fileType: FileType.AUDIO,
     audioDuration: options.audioDuration,
     mediaDuration: options.mediaDuration
@@ -181,27 +213,52 @@ async function sendAudio(data: string, options: MediaOptions) {
 }
 
 async function handleAudioRecorded(audioBlob: Blob, duration: number, fileExt: string) {
-  if (!props.targetId || !props.targetType) return
-
-  // Convert Blob to base64
-  const reader = new FileReader()
-  const base64Promise = new Promise<string>((resolve) => {
-    reader.onloadend = () => {
-      const base64data = reader.result as string
-      resolve(base64data)
-    }
-  })
-  reader.readAsDataURL(audioBlob)
-
-  const base64data = await base64Promise
-  console.log('base64data', base64data)
-  // Send audio message
-  await chatStore.sendAudio(props.targetType, props.targetId, base64data, {
+  state.audioPreview = {
+    blob: audioBlob,
+    duration,
     fileExt,
-    fileType: FileType.AUDIO,
-    audioDuration: duration,
-    mediaDuration: duration
-  })
+    isPlaying: false
+  }
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+let audioPlayer: HTMLAudioElement | null = null
+
+function toggleAudioPreview() {
+  if (!state.audioPreview.blob) return
+
+  if (state.audioPreview.isPlaying) {
+    audioPlayer?.pause()
+    state.audioPreview.isPlaying = false
+  } else {
+    if (!audioPlayer) {
+      audioPlayer = new Audio()
+      audioPlayer.onended = () => {
+        state.audioPreview.isPlaying = false
+      }
+    }
+    audioPlayer.src = URL.createObjectURL(state.audioPreview.blob)
+    audioPlayer.play()
+    state.audioPreview.isPlaying = true
+  }
+}
+
+function clearAudioPreview() {
+  if (audioPlayer) {
+    audioPlayer.pause()
+    audioPlayer.src = ''
+  }
+  state.audioPreview = {
+    blob: null,
+    duration: 0,
+    fileExt: '',
+    isPlaying: false
+  }
 }
 
 function handleKeydown(e) {

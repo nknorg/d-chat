@@ -29,6 +29,19 @@
   border-radius: 5px;
 }
 
+.v-skeleton-loader .v-skeleton-loader__avatar {
+  margin: 0 16px 0 0;
+  height: 40px;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.v-skeleton-loader .v-skeleton-loader__text {
+  margin: 4px 0 4px 0;
+  height: 16px;
+  border-radius: 16px;
+}
 
 .body-large {
   font-size: 16px;

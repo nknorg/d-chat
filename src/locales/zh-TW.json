@@ -16,6 +16,8 @@
   "sign_out": "登出",
   "sign_out_confirm": "確定登出",
   "ok": "確定",
+  "refresh": "刷新",
+  "new_tab": "新分頁",
   "delete": "刪除",
   "cancel": "取消",
   "close": "關閉",
@@ -399,5 +401,10 @@
   "mapped_address_does_not_match": "映射地址不匹配",
   "mapped_address": "關聯地址",
   "only_owner_can_modify": "僅群主可修改此項",
-  "confirm_delete_remark_avatar": "確定要刪除備註頭像嗎?"
+  "confirm_delete_remark_avatar": "確定要刪除備註頭像嗎?",
+  "options": "選項",
+  "open_extension_permissions": "開啟網站權限",
+  "microphone_permission": "麥克風權限",
+  "microphone_permission_tips": "請在設定中開啟麥克風權限",
+  "notification_permission": "通知權限"
 }

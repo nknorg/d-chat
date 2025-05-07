@@ -6,6 +6,7 @@ export interface SessionDbModel {
   target_id: string
   target_type: number
   last_message_outbound: number
+  last_message_sender: string
   last_message_at?: number
   last_message_payload?: string
   last_message_options?: string

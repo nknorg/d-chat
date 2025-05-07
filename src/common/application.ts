@@ -72,25 +72,25 @@ export class Application {
     await clientStore.getLastSignInId()
     await clientStore.getLastSignInStatus()
 
-    // auto sign in
-    const walletStore = useWalletStore()
-    const password = await walletStore.getPassword()
-    if (password !== undefined) {
-      const wallet = await walletStore.getDefault()
-      if (wallet === null) {
-        this.loading.value = false
-        return
-      }
-      const { seed } = await walletStore.restoreNknWallet(wallet.keystore, password)
-      if (seed !== undefined) {
-        await clientStore.connect(seed)
-      }
-    }
-
     if (clientStore.lastSignInId != null) {
       // init MyProfile
       const contactStore = useContactStore()
       contactStore.getMyProfile().catch((err) => logger.error(err))
+    } else {
+      // auto sign in
+      const walletStore = useWalletStore()
+      const password = await walletStore.getPassword()
+      if (password !== undefined) {
+        const wallet = await walletStore.getDefault()
+        if (wallet === null) {
+          this.loading.value = false
+          return
+        }
+        const { seed } = await walletStore.restoreNknWallet(wallet.keystore, password)
+        if (seed !== undefined) {
+          await clientStore.connect(seed)
+        }
+      }
     }
 
     this.loading.value = false

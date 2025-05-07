@@ -16,6 +16,8 @@
   "sign_out": "登出",
   "sign_out_confirm": "确认登出",
   "ok": "确定",
+  "refresh": "刷新",
+  "new_tab": "新标签",
   "delete": "删除",
   "cancel": "取消",
   "close": "关闭",
@@ -399,5 +401,10 @@
   "mapped_address_does_not_match": "映射地址不匹配",
   "mapped_address": "关联地址",
   "only_owner_can_modify": "仅群主可修改此项",
-  "confirm_delete_remark_avatar": "确定要删除备注头像吗?"
+  "confirm_delete_remark_avatar": "确定要删除备注头像吗?",
+  "options": "选项",
+  "open_extension_permissions": "打开网站权限",
+  "microphone_permission": "麦克风权限",
+  "microphone_permission_tips": "请在设置中打开麦克风权限",
+  "notification_permission": "通知权限"
 }

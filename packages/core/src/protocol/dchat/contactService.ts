@@ -13,7 +13,19 @@ import { MediaType } from '../database/cache'
 const PROFILE_EXPIRATION_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 
 export class ContactService {
+  static getNameByContact(contact: IContactSchema): string {
+    if (!contact) return ''
+    if (contact.firstName) {
+      return contact.firstName
+    } else if (contact.lastName) {
+      return contact.lastName
+    } else {
+      return this.getDefaultNickName(contact.address)
+    }
+  }
+
   static getDefaultNickName(address: string): string {
+    if (!address) return ''
     const index = address.lastIndexOf('.')
     if (index < 0) {
       return address.substring(0, 6)

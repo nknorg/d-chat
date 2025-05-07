@@ -1,4 +1,5 @@
 import Dexie from 'dexie'
+import { v4 as uuidv4 } from 'uuid'
 
 export enum MediaType {
   IMAGE = 'image',
@@ -65,7 +66,7 @@ export class CacheDb implements ICacheDb {
   }
 
   async add(item: Omit<CacheDbModel, 'id'>): Promise<string> {
-    const id = crypto.randomUUID()
+    const id = uuidv4()
     await this.db.table(CacheDb.tableName).add({ ...item, id })
     return id
   }
@@ -120,10 +121,6 @@ export class CacheDb implements ICacheDb {
   }
 
   async getCacheByName(name: string): Promise<CacheDbModel | undefined> {
-    return await this.db
-      .table(CacheDb.tableName)
-      .where('name')
-      .equals(name)
-      .first()
+    return await this.db.table(CacheDb.tableName).where('name').equals(name).first()
   }
 }

@@ -31,7 +31,6 @@ export const useClientStore = defineStore(STORE_NAME, {
       // get MyProfile
       const contactStore = useContactStore()
       contactStore.getMyProfile().catch((err) => logger.error(err))
-
       return this.lastSignInId
     },
     async disconnect() {

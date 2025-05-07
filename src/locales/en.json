@@ -16,6 +16,8 @@
   "sign_out": "Sign Out",
   "sign_out_confirm": "Confirm Sign Out",
   "ok": "OK",
+  "refresh": "Refresh",
+  "new_tab": "New Tab",
   "delete": "Delete",
   "cancel": "Cancel",
   "close": "Close",
@@ -399,5 +401,10 @@
   "mapped_address_does_not_match": "Mapped address does not match",
   "mapped_address": "Mapped address",
   "only_owner_can_modify": "Only the group owner can modify this item",
-  "confirm_delete_remark_avatar": "Are you sure you want to delete the note avatar?"
+  "confirm_delete_remark_avatar": "Are you sure you want to delete the note avatar?",
+  "options": "Options",
+  "open_extension_permissions": "Open Extension Permissions",
+  "microphone_permission": "Microphone Permission",
+  "microphone_permission_tips": "Please enable microphone permission in settings",
+  "notification_permission": "Notification Permission"
 }

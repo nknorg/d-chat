@@ -359,6 +359,7 @@ export class Dchat implements ChatProtocol {
       targetId: targetId,
       targetType: targetType,
       lastMessageOutbound: message.isOutbound,
+      lastMessageSender: message.sender,
       lastMessageAt: message.sentAt,
       lastMessagePayload: message.payload,
       lastMessageOptions: message.payload.options,
@@ -461,6 +462,7 @@ export class Dchat implements ChatProtocol {
       const sessRecord = await sessionDb.query(session.targetId, session.targetType)
       if (sessRecord) {
         sessRecord.last_message_at = session.lastMessageAt ?? now
+        sessRecord.last_message_sender = session.lastMessageSender
         sessRecord.last_message_payload = session.lastMessagePayload.toData()
         sessRecord.last_message_options = JSON.stringify(session.lastMessageOptions)
         sessRecord.un_read_count = sessRecord.un_read_count + session.unReadCount

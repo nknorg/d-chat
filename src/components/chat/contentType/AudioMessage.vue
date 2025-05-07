@@ -1,7 +1,7 @@
 <template>
   <div class="audio-message">
     <div class="audio-player">
-      <v-btn icon :color="isPlaying ? 'grey' : 'purple'" @click="togglePlay" class="play-button">
+      <v-btn icon density="comfortable" :color="isPlaying ? 'grey' : 'purple'" class="play-button" @click="togglePlay">
         <v-icon>{{ isPlaying ? 'mdi-pause' : 'mdi-play' }}</v-icon>
       </v-btn>
       <div class="audio-info">

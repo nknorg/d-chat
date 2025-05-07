@@ -7,6 +7,7 @@ export interface ISessionSchema {
   targetId: string
   targetType: number
   lastMessageOutbound: boolean
+  lastMessageSender: string
   lastMessageAt?: number
   lastMessagePayload?: PayloadSchema
   lastMessageOptions?: PayloadOptions
@@ -19,6 +20,7 @@ export class SessionSchema implements ISessionSchema {
   public targetId: string
   public targetType: SessionType
   public lastMessageOutbound: boolean
+  public lastMessageSender: string
   public lastMessageAt?: number
   public lastMessagePayload?: PayloadSchema
   public lastMessageOptions?: PayloadOptions
@@ -30,6 +32,7 @@ export class SessionSchema implements ISessionSchema {
     this.targetId = schema.targetId
     this.targetType = schema.targetType
     this.lastMessageOutbound = schema.lastMessageOutbound
+    this.lastMessageSender = schema.lastMessageSender
     this.lastMessageAt = schema.lastMessageAt
     this.lastMessagePayload = schema.lastMessagePayload
     this.lastMessageOptions = schema.lastMessageOptions
@@ -43,6 +46,7 @@ export class SessionSchema implements ISessionSchema {
       target_id: this.targetId,
       target_type: this.targetType,
       last_message_outbound: this.lastMessageOutbound ? 1 : 0,
+      last_message_sender: this.lastMessageSender,
       last_message_at: this.lastMessageAt,
       last_message_payload: this.lastMessagePayload.toData(),
       last_message_options:
@@ -59,6 +63,7 @@ export class SessionSchema implements ISessionSchema {
       targetId: dbModel.target_id,
       targetType: dbModel.target_type,
       lastMessageOutbound: dbModel.last_message_outbound === 1,
+      lastMessageSender: dbModel.last_message_sender,
       lastMessageAt: dbModel.last_message_at,
       lastMessagePayload: payload,
       lastMessageOptions:

@@ -78,7 +78,7 @@ import { useClientStore } from '@/stores/client'
 import { useContactStore } from '@/stores/contact'
 import { useNotificationStore } from '@/stores/notification'
 import { copyToClipboard } from '@/utils/util'
-import { IContactSchema, logger, SessionType } from '@d-chat/core'
+import { ContactService, IContactSchema, logger, SessionType } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import QrcodeVue from 'qrcode.vue'
 import { onBeforeMount, onUnmounted, reactive, ref, watch } from 'vue'
@@ -132,7 +132,7 @@ const resetState = async () => {
 
     if (contact && typeof contact === 'object' && 'address' in contact && 'type' in contact) {
       // Reset nickname
-      state.nickname = contact.firstName ?? contact.displayName
+      state.nickname = contact.firstName ?? contact.displayName ?? ContactService.getNameByContact(contact)
 
       // Reset avatar
       if (state.avatarUrl) {
@@ -169,7 +169,7 @@ onBeforeMount(async () => {
     })
     if (contact && typeof contact === 'object' && 'address' in contact && 'type' in contact) {
       // Set nickname
-      state.nickname = contact.firstName ?? contact.displayName
+      state.nickname = contact.firstName ?? contact.displayName ?? ContactService.getNameByContact(contact)
 
       // Load avatar if exists
       if (contact.avatar) {

@@ -42,10 +42,11 @@ export default {
     default_path: 'index.html'
   },
   // devtools_page: "src/devtools/index.html",
-  // options_page: "src/ui/options-page/index.html",
+  options_page: 'web-extension/src/ui/options/index.html',
   offline_enabled: true,
   host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'tabs', 'background', 'sidePanel', 'notifications'],
+  permissions: ['storage', 'tabs', 'background', 'sidePanel'],
+  optional_permissions: ['notifications'],
   // web_accessible_resources: [
   //   {
   //     resources: [

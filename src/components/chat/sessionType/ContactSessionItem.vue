@@ -4,7 +4,17 @@
       <ContactAvatar :item="contactInfo" />
     </template>
     <template #default="{}">
-      <v-list-item-title class="d-flex align-center">{{ contactInfo?.displayName }}</v-list-item-title>
+      <v-list-item-title class="d-flex align-center">
+        <template v-if="contactInfo">
+          {{ contactInfo.displayName }}
+        </template>
+        <template v-else>
+          <v-skeleton-loader class="pa-0" type="text" width="120" color="transparent"></v-skeleton-loader>
+        </template>
+      </v-list-item-title>
+      <v-list-item-title class="d-flex align-center">
+        <v-skeleton-loader type="" color="transparent"></v-skeleton-loader>
+      </v-list-item-title>
       <v-list-item-subtitle class="d-flex align-center">
         <SessionListMessageSummary class="text-truncate" :session-item="item" />
       </v-list-item-subtitle>
