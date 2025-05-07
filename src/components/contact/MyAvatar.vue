@@ -13,7 +13,9 @@
         <v-avatar v-if="avatarUrl" size="40">
           <v-img :src="avatarUrl" cover></v-img>
         </v-avatar>
-        <v-skeleton-loader v-else type="avatar" width="40" height="40" color="transparent"></v-skeleton-loader>
+        <v-avatar v-else size="40" color="grey" border>
+          <Icon width="40" icon="mdi:account" />
+        </v-avatar>
         <div v-if="clientStore.connectStatus == ConnectionStatus.Connecting" class="position-absolute right-0 top-0 text-warning">
           <Icon style="position: relative; left: 9px; bottom: 5px" width="24" icon="svg-spinners:bouncing-ball" />
         </div>
