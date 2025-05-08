@@ -43,7 +43,7 @@ import { Validator } from '@/helpers/validator'
 import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
 import { SessionSchema, SessionType } from '@d-chat/core'
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
 const chatStore = useChatStore()
 const sessionStore = useSessionStore()
@@ -53,6 +53,15 @@ const state = reactive({
   dialog: false,
   sendTo: ''
 })
+
+watch(
+  () => state.dialog,
+  (newVal) => {
+    if (newVal) {
+      state.sendTo = ''
+    }
+  }
+)
 
 async function submit(event) {
   const results = await event
@@ -65,7 +74,8 @@ async function submit(event) {
           targetId: state.sendTo,
           targetType: SessionType.CONTACT,
           lastMessageAt: new Date().getTime(),
-          unReadCount: 0
+          unReadCount: 0,
+          lastMessageSender: state.sendTo
         })
       )
     }
