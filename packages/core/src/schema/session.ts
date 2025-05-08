@@ -7,7 +7,7 @@ export interface ISessionSchema {
   targetId: string
   targetType: number
   lastMessageOutbound: boolean
-  lastMessageSender: string
+  lastMessageSender?: string
   lastMessageAt?: number
   lastMessagePayload?: PayloadSchema
   lastMessageOptions?: PayloadOptions
@@ -20,7 +20,7 @@ export class SessionSchema implements ISessionSchema {
   public targetId: string
   public targetType: SessionType
   public lastMessageOutbound: boolean
-  public lastMessageSender: string
+  public lastMessageSender?: string
   public lastMessageAt?: number
   public lastMessagePayload?: PayloadSchema
   public lastMessageOptions?: PayloadOptions

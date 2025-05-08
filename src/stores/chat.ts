@@ -20,9 +20,6 @@ export const useChatStore = defineStore(STORE_NAME, {
       this.currentTargetId = targetId
     },
     async subscribeTopic(topic: string) {
-      this.currentTargetId = topic
-      this.currentTargetType = SessionType.TOPIC
-
       await application.service.call(ServiceType.dchat, 'subscribeTopic', topic)
     },
     async unsubscribeTopic(topic: string) {

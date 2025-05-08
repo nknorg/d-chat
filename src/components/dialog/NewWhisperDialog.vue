@@ -74,14 +74,13 @@ async function submit(event) {
           targetId: state.sendTo,
           targetType: SessionType.CONTACT,
           lastMessageAt: new Date().getTime(),
-          unReadCount: 0,
-          lastMessageSender: state.sendTo
+          unReadCount: 0
         })
       )
     }
 
-    await chatStore.setCurrentChatTargetId(state.sendTo)
     chatStore.currentTargetType = SessionType.CONTACT
+    await chatStore.setCurrentChatTargetId(state.sendTo)
     state.dialog = false
   }
 }

@@ -83,12 +83,12 @@ async function submit(event) {
           targetId: state.sendTo,
           targetType: SessionType.TOPIC,
           lastMessageAt: new Date().getTime(),
-          unReadCount: 0,
-          lastMessageSender: state.sendTo
+          unReadCount: 0
         })
       )
     }
-
+    chatStore.currentTargetType = SessionType.TOPIC
+    await chatStore.setCurrentChatTargetId(state.sendTo)
     state.dialog = false
   }
 }

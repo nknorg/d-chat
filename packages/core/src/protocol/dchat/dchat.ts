@@ -1105,7 +1105,7 @@ export class Dchat implements ChatProtocol {
   private async shouldSubscribeTopic(topic: string): Promise<boolean> {
     const topicDb = new TopicDb(this.db)
     const record = await topicDb.getByTopic(topic)
-    if (!record) return true
+    if (!record) return false
 
     const blockHeight = await this.getBlockHeight()
     const shouldSubscribeByExpire = record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
