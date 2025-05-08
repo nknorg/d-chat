@@ -38,6 +38,7 @@
                     @click.stop="
                       () => {
                         isActive.value = false
+                        showMembersDialog = true
                       }
                     "
                   >
@@ -82,12 +83,14 @@
           </v-btn>
         </v-layout>
       </v-layout>
+      <TopicMembersDialog v-model="showMembersDialog" :topic-id="props.item.targetId" />
     </template>
   </v-list-item>
 </template>
 
 <script setup lang="ts">
 import UnreadBadge from '@/components/chat/UnreadBadge.vue'
+import TopicMembersDialog from '@/components/dialog/TopicMembersDialog.vue'
 import { useChatStore } from '@/stores/chat'
 import { useContactStore } from '@/stores/contact'
 import { useSessionStore } from '@/stores/session'
@@ -96,7 +99,7 @@ import { formatChatTime } from '@/utils/format'
 import { logger, SessionSchema, SessionType, TopicSchema } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import { onMounted, ref } from 'vue'
-import { ComponentPublicInstance, getCurrentInstance } from 'vue'
+import { ComponentPublicInstance, getCurrentInstance, createApp } from 'vue'
 
 const ins = getCurrentInstance()
 const proxy: ComponentPublicInstance = ins!.proxy!
@@ -108,6 +111,7 @@ const dialogStore = useDialogStore()
 const topicInfo = ref<TopicSchema>()
 const isSyncing = ref(false)
 const isSubscribed = ref(false)
+const showMembersDialog = ref(false)
 
 const props = defineProps<{
   item: SessionSchema

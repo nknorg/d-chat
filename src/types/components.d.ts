@@ -44,6 +44,7 @@ declare module 'vue' {
     SwitchThemeBtn: typeof import('./../components/button/SwitchThemeBtn.vue')['default']
     TextMessage: typeof import('./../components/chat/contentType/TextMessage.vue')['default']
     TopicAvatar: typeof import('./../components/contact/TopicAvatar.vue')['default']
+    TopicMembersDialog: typeof import('./../components/dialog/TopicMembersDialog.vue')['default']
     TopicSessionItem: typeof import('./../components/chat/sessionType/TopicSessionItem.vue')['default']
     TopicSubscribe: typeof import('./../components/chat/contentType/TopicSubscribe.vue')['default']
     TopicUnsubscribe: typeof import('./../components/chat/contentType/TopicUnsubscribe.vue')['default']
