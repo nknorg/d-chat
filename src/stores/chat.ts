@@ -1,6 +1,6 @@
 import { application } from '@/common/application'
 import { ServiceType } from '@/common/service'
-import { logger, MediaOptions, SessionType } from '@d-chat/core'
+import { logger, MediaOptions, SessionType, NknError } from '@d-chat/core'
 import { defineStore } from 'pinia'
 
 const STORE_NAME = 'chat'
@@ -26,9 +26,11 @@ export const useChatStore = defineStore(STORE_NAME, {
       try {
         await application.service.call(ServiceType.dchat, 'unsubscribeTopic', topic)
       } catch (e) {
-        // If error is DoesNotExist, we can ignore it as it means we're already unsubscribed
-        if (e.message?.includes('DoesNotExist')) {
+        if (e.message?.includes(NknError.DoesNotExist)) {
           logger.debug('Topic already unsubscribed:', topic)
+          return
+        } else if (e.message?.includes(NknError.DuplicateSubscription)) {
+          logger.debug('Topic already subscribed:', topic)
           return
         }
         throw e
@@ -71,7 +73,16 @@ export const useChatStore = defineStore(STORE_NAME, {
       }
     },
     async requestContactData(address: string, requestType: 'header' | 'full' = 'full') {
-      await application.service.call(ServiceType.dchat, 'requestContactData', address, requestType)
+      try {
+        await application.service.call(ServiceType.dchat, 'requestContactData', address, requestType)
+      } catch (e) {
+        // If error is DuplicateSubscription, we can ignore it as it means we're already requesting
+        if (e.message?.includes(NknError.DuplicateSubscription)) {
+          logger.debug('Contact data already requested:', address)
+          return
+        }
+        throw e
+      }
     }
   }
 })
