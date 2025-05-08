@@ -132,13 +132,13 @@ export class Dchat implements ChatProtocol {
           createdAt: Date.now()
         })
         await subscriberDb.put(subscriber.toDbModel())
-      }
 
-      // 2. Update topic subscriber count after subscriber is added
-      const existingTopic = await topicDb.getByTopic(topic)
-      if (existingTopic) {
-        existingTopic.count = existingTopic.count + 1
-        await topicDb.put(existingTopic)
+        // 2. Update topic subscriber count only when adding a new subscriber
+        const existingTopic = await topicDb.getByTopic(topic)
+        if (existingTopic) {
+          existingTopic.count = existingTopic.count + 1
+          await topicDb.put(existingTopic)
+        }
       }
     } catch (e) {
       logger.error('Failed to handle topic subscribe message:', e)
@@ -150,18 +150,22 @@ export class Dchat implements ChatProtocol {
     const subscriberDb = new SubscriberDb(this.db)
 
     try {
-      // 1. Remove subscriber first
-      await subscriberDb.deleteByTopicAndContactAddress(topic, src)
+      // 1. Check if subscriber exists first
+      const record = await subscriberDb.getByTopicAndContactAddress(topic, src)
+      if (record) {
+        // 2. Remove subscriber
+        await subscriberDb.deleteByTopicAndContactAddress(topic, src)
 
-      // 2. Update topic subscriber count and joined status after subscriber is removed
-      const existingTopic = await topicDb.getByTopic(topic)
-      if (existingTopic) {
-        existingTopic.count = Math.max(0, existingTopic.count - 1)
-        // If the unsubscriber is the current user, update joined status
-        if (src === this.client.addr) {
-          existingTopic.joined = 0
+        // 3. Update topic subscriber count and joined status only if subscriber was removed
+        const existingTopic = await topicDb.getByTopic(topic)
+        if (existingTopic) {
+          existingTopic.count = Math.max(0, existingTopic.count - 1)
+          // If the unsubscriber is the current user, update joined status
+          if (src === this.client.addr) {
+            existingTopic.joined = 0
+          }
+          await topicDb.put(existingTopic)
         }
-        await topicDb.put(existingTopic)
       }
     } catch (e) {
       logger.error('Failed to handle topic unsubscribe message:', e)
