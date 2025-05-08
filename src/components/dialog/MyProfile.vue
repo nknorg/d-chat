@@ -15,13 +15,13 @@
         <v-row>
           <v-col class="d-flex justify-center">
             <div class="position-relative">
-              <v-avatar size="140" class="cursor-pointer" border @click="handleAvatarClick">
+              <v-avatar size="140" class="cursor-pointer" color="grey" border @click="handleAvatarClick">
                 <v-img v-if="state.avatarUrl" :src="state.avatarUrl" cover width="140"></v-img>
                 <v-icon v-else size="140" icon="mdi-account"></v-icon>
               </v-avatar>
-              <div class="position-absolute bottom-0 right-0">
+              <v-avatar variant="tonal" density="comfortable" color="white" class="position-absolute bottom-0 right-0">
                 <Icon icon="material-symbols:flip-camera-ios-outline-rounded" width="30" height="30" class="cursor-pointer" @click="handleAvatarClick" />
-              </div>
+              </v-avatar>
               <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileChange" />
             </div>
           </v-col>
@@ -51,7 +51,7 @@
                   <Icon icon="material-symbols:id-card-rounded" width="24" height="24" />
                 </template>
                 <template #append-inner>
-                  <v-btn icon size="small" @click="copyToClipboard(state.address)">
+                  <v-btn icon variant="text" size="small" @click="copyToClipboard(state.address)">
                     <Icon icon="material-symbols:content-copy-outline-rounded" width="24" height="24" />
                   </v-btn>
                 </template>

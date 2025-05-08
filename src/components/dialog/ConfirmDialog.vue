@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="dialogStore.confirmDialog" max-width="300">
-    <v-card color="error">
+    <v-card :color="dialogStore.type">
       <template #title>
         <span class="font-weight-black">{{ dialogStore.title }}</span>
       </template>

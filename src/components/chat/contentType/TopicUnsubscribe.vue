@@ -1,9 +1,10 @@
 <template>
   <v-chip label color="info">
-    <router-link to="" class="mr-2">
+    <router-link to="" class="mr-2 cursor-pointer">
       {{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}
+      <ContactProfile :activator="'parent'" :contact="contactInfo" />
     </router-link>
-    {{ $t('unsubscribe') }}
+    {{ $t('leave_channel') }}
   </v-chip>
 </template>
 <script setup lang="ts">

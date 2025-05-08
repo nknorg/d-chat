@@ -66,6 +66,8 @@ export interface IMessageDb {
   updateStatusByPayloadId(payloadId: string, status: number): Promise<void>
 
   getUnreadMessages(targetId: string, targetType: SessionType): Promise<MessageDbModel[]>
+
+  markMessagesAsDeleted(targetId: string, targetType: SessionType): Promise<void>
 }
 
 export class MessageDb implements IMessageDb {
@@ -284,6 +286,22 @@ export class MessageDb implements IMessageDb {
         }
         return []
       })
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async markMessagesAsDeleted(targetId: string, targetType: SessionType): Promise<void> {
+    try {
+      await this.db
+        .table(MessageDb.tableName)
+        .where(['target_id', 'target_type'])
+        .equals([targetId, targetType])
+        .modify((item) => {
+          item.is_delete = 1
+          item.deleted_at = Date.now()
+        })
     } catch (e) {
       logger.error(e)
       throw e

@@ -24,6 +24,7 @@ import { CacheService } from './cacheService'
 import { ContactService } from './contactService'
 import { MessageService, sendOptions } from './messageService'
 import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
+import { NknError } from '../error/nknError'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -118,14 +119,7 @@ export class Dchat implements ChatProtocol {
     const subscriberDb = new SubscriberDb(this.db)
 
     try {
-      // 1. Update topic subscriber count
-      const existingTopic = await topicDb.getByTopic(topic)
-      if (existingTopic) {
-        existingTopic.count = existingTopic.count + 1
-        await topicDb.put(existingTopic)
-      }
-
-      // 2. Add new subscriber
+      // 1. Add or update subscriber first
       const record = await subscriberDb.getByTopicAndContactAddress(topic, src)
       if (record) {
         record.status = SubscriberStatus.Subscribed
@@ -139,6 +133,13 @@ export class Dchat implements ChatProtocol {
         })
         await subscriberDb.put(subscriber.toDbModel())
       }
+
+      // 2. Update topic subscriber count after subscriber is added
+      const existingTopic = await topicDb.getByTopic(topic)
+      if (existingTopic) {
+        existingTopic.count = existingTopic.count + 1
+        await topicDb.put(existingTopic)
+      }
     } catch (e) {
       logger.error('Failed to handle topic subscribe message:', e)
     }
@@ -149,15 +150,19 @@ export class Dchat implements ChatProtocol {
     const subscriberDb = new SubscriberDb(this.db)
 
     try {
-      // 1. Update topic subscriber count
+      // 1. Remove subscriber first
+      await subscriberDb.deleteByTopicAndContactAddress(topic, src)
+
+      // 2. Update topic subscriber count and joined status after subscriber is removed
       const existingTopic = await topicDb.getByTopic(topic)
       if (existingTopic) {
         existingTopic.count = Math.max(0, existingTopic.count - 1)
+        // If the unsubscriber is the current user, update joined status
+        if (src === this.client.addr) {
+          existingTopic.joined = 0
+        }
         await topicDb.put(existingTopic)
       }
-
-      // 2. Remove subscriber
-      await subscriberDb.deleteByTopicAndContactAddress(topic, src)
     } catch (e) {
       logger.error('Failed to handle topic unsubscribe message:', e)
     }
@@ -686,6 +691,28 @@ export class Dchat implements ChatProtocol {
     }
   }
 
+  async deleteSession(targetId: string, targetType: SessionType): Promise<void> {
+    if (!this.db) return
+    try {
+      const messageDb = new MessageDb(this.db)
+      const sessionDb = new SessionDb(this.db)
+
+      // Mark all messages as deleted
+      await messageDb.markMessagesAsDeleted(targetId, targetType)
+
+      // Delete the session
+      await sessionDb.delete(targetId, targetType)
+
+      // If current chat is the deleted session, clear current target
+      if (this._currentChatTargetId === targetId) {
+        this._currentChatTargetId = undefined
+      }
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
   async readMessageById(msgId: string): Promise<void> {
     try {
       const messageDb = new MessageDb(this.db)
@@ -818,6 +845,7 @@ export class Dchat implements ChatProtocol {
         const payload = MessageService.createTopicSubscribePayload(topic)
         payload.deviceId = this._deviceId
         const dest = await this.getTopicSubscribersFromDb(topic)
+        logger.debug(`send topicSubscribe message to ${dest.length} subscribers:`)
         await this.send(dest, payload)
       }
     } catch (e) {
@@ -837,13 +865,28 @@ export class Dchat implements ChatProtocol {
         }
       }
       // 1. Unsubscribe from the topic
-      await SubscribeService.unsubscribe({
-        client: this.client,
-        topic: topic,
-        nonce,
-        fee,
-        identifier
-      })
+      try {
+        await SubscribeService.unsubscribe({
+          client: this.client,
+          topic: topic,
+          nonce,
+          fee,
+          identifier
+        })
+      } catch (e) {
+        // If error is DoesNotExist, we still need to update the database
+        if (e.message?.includes(NknError.DoesNotExist)) {
+          // Update topic status
+          const topicDb = new TopicDb(this.db)
+          const existingTopic = await topicDb.getByTopic(topic)
+          if (existingTopic) {
+            existingTopic.joined = 0
+            await topicDb.put(existingTopic)
+          }
+          return
+        }
+        throw e
+      }
 
       // 2. Update topic and subscribers in database
       const topicDb = new TopicDb(this.db)
@@ -864,14 +907,34 @@ export class Dchat implements ChatProtocol {
       const payload = MessageService.createTopicUnsubscribePayload(topic)
       payload.deviceId = this._deviceId
       const dest = await this.getTopicSubscribersFromDb(topic)
+      logger.debug(`send topicUnsubscribe message to ${dest.length} subscribers:`)
       await this.send(dest, payload)
+
+      // 4. Insert topicUnsubscribe message for current user
+      const message = new MessageSchema({
+        deviceId: this._deviceId,
+        isOutbound: true,
+        messageId: MessageService.createMessageId(),
+        payload: new PayloadSchema(payload),
+        receiver: topic,
+        sender: this.client.addr,
+        sentAt: payload.timestamp,
+        status: MessageStatus.Sent,
+        targetId: topic,
+        targetType: SessionType.TOPIC
+      })
+      const record = await this.saveMessage(message)
+      if (record != null) {
+        this._addMessage?.(record)
+        await this.handleSession(record)
+      }
     } catch (e) {
       logger.error('Failed to unsubscribe topic:', e)
       throw e
     }
   }
 
-  private async syncTopicSubscribers(topic: string): Promise<void> {
+  async syncTopicSubscribers(topic: string): Promise<void> {
     // Get all subscribers from NKN chain
     const subscribers = await this.getTopicSubscribers(topic)
 
@@ -885,7 +948,7 @@ export class Dchat implements ChatProtocol {
     const topicSchema = new TopicSchema({
       id: existingTopic?.id,
       topic: topic,
-      joined: true,
+      joined: subscribers.includes(this.client.addr), // Check if current user is in subscribers list
       subscribeAt: Date.now(),
       expireHeight: expireHeight,
       count: subscribers.length,
@@ -929,6 +992,25 @@ export class Dchat implements ChatProtocol {
       if (!subscribers.includes(existingSubscriber.contact_address)) {
         await subscriberDb.delete(existingSubscriber.id)
       }
+    }
+  }
+
+  async isTopicSubscribed(topic: string, address: string): Promise<boolean> {
+    try {
+      if (!this.client?.isReady) {
+        try {
+          await Connect.waitForConnect()
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
+      }
+      const channelId = await genChannelId(topic)
+      const subscription = await this.client.getSubscription(channelId, address)
+      return subscription.expiresAt > 0
+    } catch (e) {
+      logger.error('Failed to check topic subscription:', e)
+      return false
     }
   }
 

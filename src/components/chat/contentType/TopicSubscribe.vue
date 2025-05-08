@@ -1,7 +1,8 @@
 <template>
   <v-chip label color="info">
-    <router-link to="" class="mr-2">
+    <router-link to="" class="mr-2 cursor-pointer">
       {{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}
+      <ContactProfile :activator="'parent'" :contact="contactInfo" />
     </router-link>
     {{ $t('joined_channel') }}
   </v-chip>

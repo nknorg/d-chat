@@ -4,6 +4,7 @@
     <SideBar />
     <default-view />
     <Footer app style="z-index: 100" />
+    <ConfirmDialog />
   </v-app>
   <NotivueTemplate />
 </template>

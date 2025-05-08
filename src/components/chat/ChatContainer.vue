@@ -5,54 +5,68 @@
     </v-container>
     <v-fab
       class="scroll-to-bottom-btn"
+      color="purple"
       :active="state.showScrollToBottom"
       icon="mdi-chevron-down"
-      variant="outlined"
+      variant="tonal"
       absolute
       size="small"
       location="bottom right"
       @click="scrollToBottom"
     ></v-fab>
     <v-container class="d-flex flex-grow-0">
-      <div class="mr-2 align-self-end">
-        <v-btn icon color="blue" size="48">
-          <svg-icon name="grid" :size="28" />
-          <v-menu activator="parent" transition="fade-transition" location="top center">
-            <v-card class="d-flex flex-0-0 mt-0 ma-4 pa-4">
-              <v-row>
-                <v-col>
-                  <v-btn icon color="blue" size="48" @click="sendImage">
-                    <svg-icon name="image" :size="28" />
+      <template v-if="chatStore.currentTargetType === SessionType.TOPIC && !isSubscribed">
+        <v-container class="d-flex justify-center align-center">
+          <v-alert class="text-center">
+            <span class="mr-2">{{ $t('need_re_subscribe') }}</span>
+            <v-btn variant="tonal" color="primary" @click="handleJoinTopic">
+              <v-icon start>mdi-plus</v-icon>
+              {{ $t('join_channel') }}
+            </v-btn>
+          </v-alert>
+        </v-container>
+      </template>
+      <template v-else>
+        <div class="mr-2 align-self-end">
+          <v-btn icon color="blue" size="48">
+            <svg-icon name="grid" :size="28" />
+            <v-menu activator="parent" transition="fade-transition" location="top center">
+              <v-card class="d-flex flex-0-0 mt-0 ma-4 pa-4">
+                <v-row>
+                  <v-col>
+                    <v-btn icon color="blue" size="48" @click="sendImage">
+                      <svg-icon name="image" :size="28" />
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-menu>
+          </v-btn>
+        </div>
+        <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown">
+          <template #prepend-inner>
+            <AudioRecorder @recorded="handleAudioRecorded" @recording-started="clearAudioPreview" />
+            <v-chip v-if="state.audioPreview.blob" label>
+              <div class="audio-message">
+                <div class="audio-player">
+                  <v-btn icon density="compact" size="small" :color="state.audioPreview.isPlaying ? 'red' : 'purple'" class="play-button" @click="toggleAudioPreview">
+                    <v-icon>{{ state.audioPreview.isPlaying ? 'mdi-stop' : 'mdi-play' }}</v-icon>
                   </v-btn>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-menu>
-        </v-btn>
-      </div>
-      <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown">
-        <template #prepend-inner>
-          <AudioRecorder @recorded="handleAudioRecorded" @recording-started="clearAudioPreview" />
-          <v-chip v-if="state.audioPreview.blob" label>
-            <div class="audio-message">
-              <div class="audio-player">
-                <v-btn icon density="compact" size="small" :color="state.audioPreview.isPlaying ? 'red' : 'purple'" class="play-button" @click="toggleAudioPreview">
-                  <v-icon>{{ state.audioPreview.isPlaying ? 'mdi-stop' : 'mdi-play' }}</v-icon>
-                </v-btn>
-                <span class="ml-2">{{ formatDuration(state.audioPreview.duration) }}</span>
-                <v-btn icon density="compact" size="small" color="grey" class="ml-2" @click="clearAudioPreview">
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
+                  <span class="ml-2">{{ formatDuration(state.audioPreview.duration) }}</span>
+                  <v-btn icon density="compact" size="small" color="grey" class="ml-2" @click="clearAudioPreview">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </div>
               </div>
-            </div>
-          </v-chip>
-        </template>
-      </v-textarea>
-      <div class="align-self-end ml-2">
-        <v-btn icon color="blue" size="48" @click="send">
-          <svg-icon name="send" :size="28" />
-        </v-btn>
-      </div>
+            </v-chip>
+          </template>
+        </v-textarea>
+        <div class="align-self-end ml-2">
+          <v-btn icon color="blue" size="48" @click="send">
+            <svg-icon name="send" :size="28" />
+          </v-btn>
+        </div>
+      </template>
     </v-container>
   </v-layout>
 </template>
@@ -103,6 +117,7 @@ const state = reactive<{
 })
 
 const messageContainer = ref<ComponentPublicInstance | null>(null)
+const isSubscribed = ref(false)
 
 function checkScroll() {
   if (!messageContainer.value) return
@@ -156,6 +171,17 @@ watch(
       bindScrollEvent()
     })
   }
+)
+
+watch(
+  () => chatStore.currentTargetId,
+  async (newTargetId) => {
+    if (newTargetId && chatStore.currentTargetType === SessionType.TOPIC) {
+      const contact = await contactStore.getContactInfo({ type: SessionType.TOPIC, address: newTargetId })
+      isSubscribed.value = contact?.joined
+    }
+  },
+  { immediate: true }
 )
 
 async function init() {
@@ -300,12 +326,21 @@ async function loadMoreMessages() {
     state.isLoadingMore = false
   }
 }
+
+async function handleJoinTopic() {
+  if (chatStore.currentTargetId) {
+    await chatStore.subscribeTopic(chatStore.currentTargetId)
+    const contact = await contactStore.getContactInfo({ type: SessionType.TOPIC, address: chatStore.currentTargetId })
+    isSubscribed.value = contact?.joined
+  }
+}
 </script>
 <style lang="scss">
 .message-container {
   width: 100%;
   flex-wrap: nowrap !important;
   scroll-behavior: smooth;
+  padding: 16px;
 }
 
 .scroll-to-bottom-btn {

@@ -147,6 +147,20 @@ export interface ChatProtocol {
    */
   unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string }): Promise<void>
 
+  /** 
+   * Syncs the subscribers for a topic
+   * @param topic - The topic to sync subscribers for
+   */
+  syncTopicSubscribers(topic: string): Promise<void>
+
+  /**
+   * Checks if a topic is subscribed
+   * @param topic - The topic to check
+   * @param address - The address to check
+   * @returns Promise resolving to true if subscribed, false otherwise
+   */
+  isTopicSubscribed(topic: string, address: string): Promise<boolean>
+
   /**
    * Gets the list of subscribers for a topic
    * @param topic - The topic to check
@@ -239,4 +253,11 @@ export interface ChatProtocol {
    * @param key - The cache key to delete
    */
   deleteCache(key: string): Promise<void>
+
+  /**
+   * Deletes a session
+   * @param targetId - The target identifier
+   * @param targetType - The type of session
+   */
+  deleteSession(targetId: string, targetType: SessionType): Promise<void>
 }

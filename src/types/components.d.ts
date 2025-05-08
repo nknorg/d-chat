@@ -13,6 +13,7 @@ declare module 'vue' {
     ChatContainer: typeof import('./../components/chat/ChatContainer.vue')['default']
     ConfirmDialog: typeof import('./../components/dialog/ConfirmDialog.vue')['default']
     ContactAvatar: typeof import('./../components/contact/ContactAvatar.vue')['default']
+    ContactProfile: typeof import('./../components/dialog/ContactProfile.vue')['default']
     ContactSessionItem: typeof import('./../components/chat/sessionType/ContactSessionItem.vue')['default']
     Footer: typeof import('./../components/Footer.vue')['default']
     ImageCropper: typeof import('./../components/dialog/ImageCropper.vue')['default']

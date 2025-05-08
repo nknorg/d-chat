@@ -100,6 +100,8 @@
   "channel_invitation": "群聊邀請",
   "accept_invitation": "接受邀請",
   "joined_channel": "加入群聊",
+  "join_channel": "加入頻道",
+  "leave_channel": "退出頻道",
   "start_chat": "開始聊天",
   "wallet_name": "賬戶名稱",
   "hint_enter_wallet_name": "賬戶名稱",

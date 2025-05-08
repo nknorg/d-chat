@@ -26,6 +26,8 @@ export interface ISessionDb {
   query(targetId: string, targetType: number): Promise<SessionDbModel | null>
 
   queryByTargetId(targetId: string): Promise<SessionDbModel | null>
+
+  delete(targetId: string, targetType: number): Promise<void>
 }
 
 export class SessionDb implements ISessionDb {
@@ -93,5 +95,18 @@ export class SessionDb implements ISessionDb {
 
   updateLastMessage(model: SessionDbModel): Promise<void> {
     return Promise.resolve(undefined)
+  }
+
+  async delete(targetId: string, targetType: number): Promise<void> {
+    try {
+      await this.db
+        .table(SessionDb.tableName)
+        .where(['target_id', 'target_type'])
+        .equals([targetId, targetType])
+        .delete()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
   }
 }
