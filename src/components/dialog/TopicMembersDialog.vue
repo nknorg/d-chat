@@ -45,7 +45,7 @@
             <template #prepend>
               <ContactAvatar :item="member" />
             </template>
-            <v-list-item-title>{{ member.displayName || ContactService.getDefaultNickName(member.address) }}</v-list-item-title>
+            <v-list-item-title>{{ member.displayName || ContactService.getNameByContact(member) }}</v-list-item-title>
             <v-list-item-subtitle>{{ member.address }}</v-list-item-subtitle>
           </v-list-item>
         </v-list>

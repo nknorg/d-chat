@@ -16,7 +16,7 @@
     </v-col>
     <v-col>
       <v-layout class="cursor-pointer">
-        <h4>{{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}</h4>
+        <h4>{{ contactInfo?.displayName || ContactService.getNameByContact(contactInfo) }}</h4>
         <ContactProfile :activator="'parent'" :contact="contactInfo" />
       </v-layout>
       <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent>

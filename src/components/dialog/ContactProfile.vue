@@ -70,10 +70,12 @@ import { Icon } from '@iconify/vue'
 import QrcodeVue from 'qrcode.vue'
 import { onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useChatStore } from '@/stores/chat'
 
 const { t } = useI18n()
 const contactStore = useContactStore()
 const notificationStore = useNotificationStore()
+const chatStore = useChatStore()
 
 interface Props {
   address?: string
@@ -113,6 +115,9 @@ watch(
     // Load data when dialog opens
     if (newValue) {
       try {
+        // Request latest contact data
+        await chatStore.requestContactData(state.address)
+
         if (props.contact) {
           // If contact is provided, use it directly
           state.nickname = props.contact.firstName ?? props.contact.displayName ?? ContactService.getNameByContact(props.contact)

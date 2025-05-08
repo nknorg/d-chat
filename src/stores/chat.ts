@@ -69,6 +69,9 @@ export const useChatStore = defineStore(STORE_NAME, {
         this.currentTargetId = undefined
         this.currentTargetType = undefined
       }
+    },
+    async requestContactData(address: string, requestType: 'header' | 'full' = 'full') {
+      await application.service.call(ServiceType.dchat, 'requestContactData', address, requestType)
     }
   }
 })

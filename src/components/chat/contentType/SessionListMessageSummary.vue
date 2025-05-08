@@ -9,7 +9,7 @@
     <svg-icon name="microphone" :size="18" />
   </span>
   <span v-else-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.topicSubscribe">
-    {{ contactInfo?.displayName || ContactService.getDefaultNickName(props.sessionItem.lastMessageSender) }} {{ $t('joined_channel') }}
+    {{ contactInfo?.displayName || ContactService.getNameByContact(contactInfo) }} {{ $t('joined_channel') }}
   </span>
 </template>
 <script setup lang="ts">

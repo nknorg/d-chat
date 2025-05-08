@@ -1,7 +1,7 @@
 <template>
   <v-chip label color="info">
     <router-link to="" class="mr-2 cursor-pointer">
-      {{ contactInfo?.displayName || ContactService.getDefaultNickName(props.message.sender) }}
+      {{ contactInfo?.displayName || ContactService.getNameByContact(contactInfo) }}
       <ContactProfile :activator="'parent'" :contact="contactInfo" />
     </router-link>
     {{ $t('leave_channel') }}
