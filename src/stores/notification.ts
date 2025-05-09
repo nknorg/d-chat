@@ -29,7 +29,6 @@ export const useNotificationStore = defineStore(STORE_NAME, {
       this.soundComponent = component
     },
     async playNotificationSound() {
-      console.log('playNotificationSound================')
       const settingStore = useSettingStore()
       const enableNotificationSound = await settingStore.getEnableNotificationSound()
       if (enableNotificationSound && this.soundComponent) {

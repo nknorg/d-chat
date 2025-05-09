@@ -184,7 +184,7 @@ async function onNotificationSoundChange(event: any) {
   state.enableNotificationSound = value
   await settingStore.setEnableNotificationSound(value)
   if (value) {
-    // notificationStore.playNotificationSound()
+    await notificationStore.playNotificationSound()
   }
 }
 
