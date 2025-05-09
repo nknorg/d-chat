@@ -30,6 +30,7 @@ declare module 'vue' {
     NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
     NotivueRequestPermissionTemplate: typeof import('./../components/notification/NotivueRequestPermissionTemplate.vue')['default']
     NotivueTemplate: typeof import('./../components/notification/NotivueTemplate.vue')['default']
+    PopularChannels: typeof import('./../components/topic/PopularChannels.vue')['default']
     RefreshBtn: typeof import('./../components/button/RefreshBtn.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

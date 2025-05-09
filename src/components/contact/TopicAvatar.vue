@@ -2,7 +2,7 @@
   <v-skeleton-loader v-if="!item && !topicItem" type="avatar" color="transparent"></v-skeleton-loader>
   <v-avatar v-else :color="(item || topicItem)?.options?.avatarBgColor || 'primary'" class="relative" style="overflow: visible">
     <v-img v-if="avatarUrl" :src="avatarUrl" cover></v-img>
-    <span v-else :style="{ color: (item || topicItem)?.options?.avatarFgColor || 'white' }">
+    <span v-else class="body-large" :style="{ color: (item || topicItem)?.options?.avatarFgColor || 'white' }">
       {{ displayName.substring(0, 2).toUpperCase() }}
     </span>
     <span style="position: absolute; top: -4px; right: -4px">

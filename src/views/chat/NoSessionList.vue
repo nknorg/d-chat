@@ -1,10 +1,10 @@
 <template>
-  <v-container class="d-flex align-center justify-center align-self-center mt-16" fluid>
-  TODO: UI
-  <br>
-  You have no news yet, it is recommended to join these channels: d-chat, nkn-chat, 中文 .
-  </v-container>
-</template>
-<script setup lang="ts">
+  <v-layout class="fill-height overflow-y-auto">
+    <v-container class="d-flex flex-column align-center mt-4">
+      <div class="text-h5 mb-8">{{ $t('chat_no_messages_title') }}</div>
+      <div class="text-subtitle-1 text-medium-emphasis mb-8">{{ $t('chat_no_messages_desc') }}</div>
 
-</script>
+      <PopularChannels />
+    </v-container>
+  </v-layout>
+</template>

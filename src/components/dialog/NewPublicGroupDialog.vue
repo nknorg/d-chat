@@ -1,6 +1,6 @@
 <template>
-  <v-dialog activator="parent" width="600" v-model="state.dialog">
-    <template v-slot:default="{ isActive }">
+  <v-dialog v-model="state.dialog" activator="parent" width="600">
+    <template #default="{ isActive }">
       <v-form fast-fail @submit.prevent="submit">
         <v-card class="pt-2">
           <v-card-title>
@@ -9,9 +9,9 @@
           <v-card-text>
             <v-row>
               <v-text-field
+                v-model="state.sendTo"
                 :loading="state.loading"
                 :disabled="state.loading"
-                v-model="state.sendTo"
                 :label="$t('send_to')"
                 :placeholder="$t('enter_topic')"
                 autofocus
@@ -21,9 +21,12 @@
               </v-text-field>
             </v-row>
           </v-card-text>
+          <v-card-text>
+            <PopularChannels @close="closeDialog" />
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue-darken-1" variant="text" @click="isActive.value = false" :disabled="state.loading">
+            <v-btn color="blue-darken-1" variant="text" :disabled="state.loading" @click="isActive.value = false">
               {{ $t('cancel') }}
             </v-btn>
             <v-btn color="blue-darken-1" variant="text" type="submit" :loading="state.loading" :disabled="state.loading">
@@ -52,6 +55,10 @@ const state = reactive({
   dialog: false,
   sendTo: ''
 })
+
+const closeDialog = () => {
+  state.dialog = false
+}
 
 watch(
   () => state.dialog,

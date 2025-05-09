@@ -9,7 +9,7 @@
       <v-container class="pa-5">
         <!-- Topic Info Section -->
         <div class="d-flex align-center">
-          <TopicAvatar :item="topicInfo" size="64" />
+          <TopicAvatar :item="topicInfo" size="58" />
           <div class="ml-4">
             <div class="text-h6">{{ topicInfo?.topic }}</div>
             <v-chip color="blue" density="comfortable" size="small" variant="tonal">

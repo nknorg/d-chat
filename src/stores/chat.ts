@@ -64,6 +64,9 @@ export const useChatStore = defineStore(STORE_NAME, {
     async getTopicSubscribersFromDb(topic: string) {
       return await application.service.call(ServiceType.dchat, 'getTopicSubscribersFromDb', topic)
     },
+    async getTopicSubscribersCount(topic: string) {
+      return await application.service.call(ServiceType.dchat, 'getTopicSubscribersCount', topic)
+    },
     async deleteSession(targetId: string, targetType: SessionType) {
       await application.service.call(ServiceType.dchat, 'deleteSession', targetId, targetType)
       // If current chat is the deleted session, clear current target

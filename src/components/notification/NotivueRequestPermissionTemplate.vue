@@ -1,5 +1,5 @@
 <template>
-  <v-alert :theme="theme.global.name.value" max-width="400" type="warning" border="start" close-label="Close Alert" variant="elevated" closable>
+  <v-alert :theme="theme.global.name.value" max-width="400" type="warning" border="start" close-label="Close Alert" variant="elevated" closable @click:close="handleClose">
     <template #title>
       {{ props.item.title }}
     </template>
@@ -32,5 +32,10 @@ const openPermissionsPage = () => {
   chrome.tabs.create({
     url: `chrome://settings/content/siteDetails?site=chrome-extension://${extensionId}`
   })
+}
+
+// Handle close event
+const handleClose = () => {
+  props.item.destroy()
 }
 </script>

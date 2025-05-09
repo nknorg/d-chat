@@ -24,9 +24,7 @@ export class CacheService {
   static async setCache({ db, name, value }: { db: Dexie; name: string; value: any }): Promise<string> {
     let file: File | Blob
 
-    // 检查是否是 base64 字符串
     if (typeof value === 'string' && value.startsWith('data:')) {
-      // 从 base64 创建 Blob
       const base64Data = value.split(',')[1]
       const byteCharacters = atob(base64Data)
       const byteArrays = []

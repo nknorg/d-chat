@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ContactSchema, SessionType } from '@d-chat/core'
+import { ContactSchema, ContactService, SessionType } from '@d-chat/core'
 import { useCacheStore } from '@/stores/cache'
 import { useContactStore } from '@/stores/contact'
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
@@ -28,13 +28,13 @@ const displayName = computed(() => {
   if (contactItem.value?.firstName) {
     return contactItem.value?.firstName
   }
-  return contactItem.value?.displayName
+  return contactItem.value?.displayName ?? ContactService.getNameByContact(contactItem.value)
 })
 
 const loadAvatar = async () => {
   if (contactItem.value?.avatar) {
     const avatarCache = await cacheStore.getCache(contactItem.value.avatar)
-    if (avatarCache) {
+    if (avatarCache && avatarCache.source.size > 0) {
       avatarUrl.value = avatarCache.source instanceof Blob ? URL.createObjectURL(avatarCache.source) : avatarCache.source
     }
   } else {

@@ -11,11 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import { i18n } from '@/plugins/i18n'
 import { ref, onUnmounted } from 'vue'
 import { logger } from '@d-chat/core'
 import { useNotificationStore } from '@/stores/notification'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const notificationStore = useNotificationStore()
 const getFileExtFromMimeType = (mimeType: string): string => {
   const mimeToExt: Record<string, string> = {
@@ -123,8 +124,8 @@ const startRecording = async () => {
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         if (isExtension) {
           notificationStore.requestPermission({
-            title: i18n.global.t('microphone_permission'),
-            message: i18n.global.t('microphone_permission_tips')
+            title: t('microphone_permission'),
+            message: t('microphone_permission_tips')
           })
         }
         return
