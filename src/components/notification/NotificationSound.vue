@@ -1,11 +1,12 @@
 <template>
-  <audio ref="audioRef" src="/assets/sfx/notification.ogg" style="display: none" />
+  <audio ref="audioRef" :src="notificationSound" style="display: none" />
 </template>
 
 <script setup lang="ts">
-import { logger } from '@d-chat/core'
-import { ref, onMounted } from 'vue'
+import notificationSound from '@assets/sfx/notification.ogg'
 import { useNotificationStore } from '@/stores/notification'
+import { logger } from '@d-chat/core'
+import { onMounted, ref } from 'vue'
 
 const audioRef = ref<HTMLAudioElement>()
 const notificationStore = useNotificationStore()

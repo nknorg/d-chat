@@ -41,7 +41,6 @@ declare module 'vue' {
     SessionListMessageSummary: typeof import('./../components/chat/contentType/SessionListMessageSummary.vue')['default']
     SettingsBtn: typeof import('./../components/button/SettingsBtn.vue')['default']
     SettingsDialog: typeof import('./../components/dialog/SettingsDialog.vue')['default']
-    SettingsDIalog: typeof import('./../components/dialog/SettingsDIalog.vue')['default']
     SideBar: typeof import('./../components/nav/SideBar.vue')['default']
     Splash: typeof import('./../components/Splash.vue')['default']
     SvgIcon: typeof import('./../components/SvgIcon.vue')['default']
