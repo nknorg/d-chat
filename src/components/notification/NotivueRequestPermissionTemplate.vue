@@ -1,5 +1,5 @@
 <template>
-  <v-alert :theme="theme.global.name.value" max-width="400" type="warning" border="start" close-label="Close Alert" variant="elevated" closable @click:close="handleClose">
+  <v-alert :theme="theme.global.name.value" max-width="420" type="warning" border="start" close-label="Close Alert" variant="elevated" closable @click:close="handleClose">
     <template #title>
       {{ props.item.title }}
     </template>

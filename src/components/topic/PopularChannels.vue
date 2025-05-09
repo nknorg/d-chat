@@ -19,7 +19,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn block color="primary" variant="tonal" :loading="loadingChannels.includes(channel.topic)" @click="subscribeChannel(channel.topic)">
-            {{ $t('join') }}
+            {{ $t('join_channel') }}
           </v-btn>
         </v-card-actions>
       </v-card>

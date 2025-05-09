@@ -3,7 +3,8 @@
     <NotivueSwipe v-if="item.props.type === NotificationType.DEFAULT" :item="item">
       <Notification :item="item" :theme="theme.global.name.value == 'dark' ? darkTheme : lightTheme" />
     </NotivueSwipe>
-    <NotivueRequestPermissionTemplate v-else-if="NotificationType.REQUEST_PERMISSION" :item="item" />
+    <NotivueRequestPermissionTemplate v-else-if="item.props.type === NotificationType.REQUEST_PERMISSION" :item="item" />
+    <NotivueMessageNotificationTemplate v-else-if="item.props.type === NotificationType.MESSAGE_NOTIFICATION" :item="item" />
   </Notivue>
 </template>
 

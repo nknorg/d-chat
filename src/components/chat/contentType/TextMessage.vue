@@ -1,10 +1,10 @@
 <template>
-  <div v-html="safeHtml"></div>
+  <div class="text" v-html="safeHtml"></div>
 </template>
 <script setup lang="ts">
 import { MessageSchema } from '@d-chat/core'
-import { defineProps, computed } from 'vue'
 import { marked } from 'marked'
+import { computed, defineProps } from 'vue'
 
 const props = defineProps<{
   message: MessageSchema

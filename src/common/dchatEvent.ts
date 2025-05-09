@@ -1,5 +1,6 @@
 import { useChatStore } from '@/stores/chat'
 import { useMessageStore } from '@/stores/message'
+import { useNotificationStore } from '@/stores/notification'
 import { useSessionStore } from '@/stores/session'
 import { Dchat, MessageSchema, SessionSchema } from '@d-chat/core'
 
@@ -8,6 +9,12 @@ export function addDchatEvents(ins: Dchat) {
   const messageStore = useMessageStore()
   const sessionStore = useSessionStore()
   ins.addMessage = (message: MessageSchema) => {
+    if (!message.isOutbound) {
+      const notificationStore = useNotificationStore()
+      notificationStore.notification(message)
+      notificationStore.playNotificationSound()
+    }
+
     if (chatStore.currentTargetId == message.targetId) {
       messageStore.addMessage(message)
     }

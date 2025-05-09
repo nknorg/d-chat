@@ -94,8 +94,8 @@ onMounted(async () => {
 })
 
 function selectedSession(s: SessionSchema) {
-  chatStore.currentTargetId = s.targetId
   chatStore.currentTargetType = s.targetType
+  chatStore.setCurrentChatTargetId(s.targetId)
   sessionStore.readAllMessagesByTargetId(s.targetId, s.targetType)
 }
 

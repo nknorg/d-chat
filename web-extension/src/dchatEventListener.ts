@@ -1,6 +1,7 @@
 // @ts-ignore
 import { useChatStore } from '@/stores/chat'
 import { useMessageStore } from '@/stores/message'
+import { useNotificationStore } from '@/stores/notification'
 import { useSessionStore } from '@/stores/session'
 
 // @ts-ignore
@@ -12,6 +13,11 @@ port.onMessage.addListener(function (msg) {
   const sessionStore = useSessionStore()
 
   if (msg.method == 'addMessage') {
+    if (!msg.message.isOutbound) {
+      const notificationStore = useNotificationStore()
+      notificationStore.notification(msg.message)
+      notificationStore.playNotificationSound()
+    }
     if (chatStore.currentTargetId == msg.message.targetId) {
       messageStore.addMessage(msg.message)
     }

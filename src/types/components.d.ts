@@ -28,6 +28,8 @@ declare module 'vue' {
     NewPublicGroupDialog: typeof import('./../components/dialog/NewPublicGroupDialog.vue')['default']
     NewTabBtn: typeof import('./../components/button/NewTabBtn.vue')['default']
     NewWhisperDialog: typeof import('./../components/dialog/NewWhisperDialog.vue')['default']
+    NotificationSound: typeof import('./../components/notification/NotificationSound.vue')['default']
+    NotivueMessageNotificationTemplate: typeof import('./../components/notification/NotivueMessageNotificationTemplate.vue')['default']
     NotivueRequestPermissionTemplate: typeof import('./../components/notification/NotivueRequestPermissionTemplate.vue')['default']
     NotivueTemplate: typeof import('./../components/notification/NotivueTemplate.vue')['default']
     PopularChannels: typeof import('./../components/topic/PopularChannels.vue')['default']

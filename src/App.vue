@@ -1,6 +1,7 @@
 <template>
   <Splash v-if="application.loading.value" />
   <router-view v-else />
+  <NotificationSound />
 </template>
 
 <script lang="ts" setup>

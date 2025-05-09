@@ -183,6 +183,9 @@ async function onNotificationSoundChange(event: any) {
   const value = event.target.checked
   state.enableNotificationSound = value
   await settingStore.setEnableNotificationSound(value)
+  if (value) {
+    // notificationStore.playNotificationSound()
+  }
 }
 
 async function exportWallet() {
