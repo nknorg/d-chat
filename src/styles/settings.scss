@@ -9,6 +9,11 @@
 //   $color-pack: false
 // );
 
+:root {
+  --nv-gap: 1rem;
+  --nv-z: 9999;
+}
+
 .splitpanes {
   .splitpanes__pane {
     overflow: auto;

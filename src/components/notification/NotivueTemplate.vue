@@ -14,10 +14,3 @@ import { useTheme } from 'vuetify'
 
 const theme = useTheme()
 </script>
-
-<style>
-:root {
-  --nv-gap: 1rem;
-  --nv-z: 9999;
-}
-</style>

@@ -1,15 +1,11 @@
 <template>
   <v-menu>
-    <template v-slot:activator="{ props }">
+    <template #activator="{ props }">
       <v-btn icon="mdi-web" variant="text" v-bind="props"></v-btn>
     </template>
 
     <v-list>
-      <v-list-item
-        v-for="(item, i) in state.locales"
-        :key="i"
-        :value="item.code"
-      >
+      <v-list-item v-for="(item, i) in state.locales" :key="i" :value="item.code">
         <v-list-item-title @click="onChangeSwitchLanguage(item)">{{ $rt(item.lang) }}</v-list-item-title>
       </v-list-item>
     </v-list>

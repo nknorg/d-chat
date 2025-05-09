@@ -5,7 +5,6 @@ import setting from './setting'
 import wallet from './wallet'
 import { createRouter, createWebHashHistory } from 'vue-router'
 
-
 const routes = [
   {
     path: '/',
@@ -23,20 +22,13 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layouts/default/Default.vue'),
-    children: [
-      ...setting,
-      ...chat,
-      ...wallet,
-    ]
+    children: [...setting, ...chat, ...wallet]
   },
   {
     path: '/contact',
     component: () => import('@/layouts/sub/Default.vue'),
-    children: [
-      ...contact,
-    ]
-  },
-
+    children: [...contact]
+  }
 ]
 
 const router = createRouter({

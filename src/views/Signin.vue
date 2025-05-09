@@ -12,27 +12,15 @@
           <NewTabBtn />
           <SwitchThemeBtn />
           <SwitchLanguageBtn />
-          <SettingsBtn />
         </v-app-bar>
-
         <Login />
       </v-container>
     </v-main>
   </v-app>
   <ConfirmDialog />
-  <Notivue v-slot="item">
-    <Notification
-      :item="item"
-      :theme="theme.global.name.value == 'dark' ? darkTheme : lightTheme"
-    />
-  </Notivue>
+  <NotivueTemplate />
 </template>
 
 <script lang="ts" setup>
-import SettingsBtn from '@/components/button/SettingsBtn.vue'
 import Logo from '@assets/splash/logo.png'
-import { Notivue, Notification, darkTheme, lightTheme } from 'notivue'
-import { useTheme } from 'vuetify'
-
-const theme = useTheme()
 </script>

@@ -20,7 +20,6 @@
     <v-card min-width="300">
       <v-list lines="two">
         <v-list-item v-for="wallet in walletStore.wallets" :key="wallet.address" @click="onSelectAccount(wallet)">
-          <!--TODO: Add avatar-->
           <template #prepend>
             <v-avatar size="40">
               <Icon icon="material-symbols:account-balance-wallet-outline" width="40" height="40" />
@@ -77,7 +76,8 @@ async function deleteAccount(wallet: WalletRecord | null): Promise<void> {
   }
   const result = await dialogStore.showConfirm({
     title: proxy.$t('delete_wallet_confirm_title'),
-    content: proxy.$t('delete_wallet_confirm_text')
+    content: proxy.$t('delete_wallet_confirm_text'),
+    type: 'error'
   })
   if (result) {
     await walletStore.deleteWallet(wallet)
