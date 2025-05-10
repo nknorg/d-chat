@@ -257,8 +257,8 @@ export class MessageDb implements IMessageDb {
   async getUnreadMessageCount(): Promise<number> {
     try {
       return await this.db.table(MessageDb.tableName)
-        .where('is_delete')
-        .equals(0)
+        .where(['is_outbound', 'is_delete'])
+        .equals([0, 0])
         .and((item) => item.status < MessageStatus.Read)
         .count()
     } catch (e) {

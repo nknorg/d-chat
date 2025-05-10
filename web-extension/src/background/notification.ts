@@ -14,24 +14,21 @@ export class NotificationManager {
   public static getInstance(): NotificationManager {
     if (!NotificationManager.instance) {
       NotificationManager.instance = new NotificationManager()
-      NotificationManager.instance.initMessageListener()
     }
     return NotificationManager.instance
   }
 
-  private initMessageListener() {
-    chrome.runtime.onMessage.addListener((
-      message: { type: string },
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: any) => void
-    ) => {
+  public initMessageListener() {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === 'UPDATE_BADGE_COUNT') {
-        this.updateUnreadCount().then(() => {
-          sendResponse({ success: true })
-        }).catch((error) => {
-          logger.error('Failed to update unread count:', error)
-          sendResponse({ success: false, error: error.message })
-        })
+        this.updateUnreadCount()
+          .then(() => {
+            sendResponse({ success: true })
+          })
+          .catch((error) => {
+            logger.error('Failed to update unread count:', error)
+            sendResponse({ success: false, error: error.message })
+          })
         return true
       }
     })
@@ -86,7 +83,8 @@ export class NotificationManager {
       type: 'basic',
       priority: 2,
       title: message.targetType === SessionType.TOPIC ? message.payload.topic : contactInfo.displayName,
-      message: message.targetType === SessionType.TOPIC ? `${contactInfo.displayName}: ${messageContent}` : messageContent,
+      message:
+        message.targetType === SessionType.TOPIC ? `${contactInfo.displayName}: ${messageContent}` : messageContent,
       iconUrl: 'assets/d-chat/logo.png',
       silent: !(await this.getEnableNotificationSound())
     }
@@ -106,7 +104,10 @@ export class NotificationManager {
 
   public async updateUnreadCount() {
     try {
+      // Get unread message count
+      logger.debug('Update unread count')
       const unreadCount = await services[ServiceType.dchat].getUnreadMessageCount()
+      logger.debug('Unread count:', unreadCount)
       if (unreadCount > 0) {
         chrome.action.setBadgeText({ text: unreadCount.toString() })
       } else {

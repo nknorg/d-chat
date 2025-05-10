@@ -196,6 +196,11 @@ async function handleDelete() {
 
 onMounted(async () => {
   await checkSubscriptionStatus()
+
+  await chatStore.getCurrentChatTargetId()
+  if (chatStore.currentTargetId === props.item.targetId) {
+    selectedSession(props.item)
+  }
 })
 
 function selectedSession(s: SessionSchema) {

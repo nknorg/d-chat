@@ -1,5 +1,6 @@
 import { logger, StoreAdapter } from '@d-chat/core'
 import { ChromeStorage } from '../chromeStorage'
+import { NotificationManager } from './notification'
 import { services } from './services'
 import { upgrade } from '../upgrade'
 import { AutoLoginManager } from './autoLogin'
@@ -20,6 +21,8 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
     return
   }
 })
+
+NotificationManager.getInstance().initMessageListener()
 
 // Try auto login when extension starts
 const autoLoginManager = AutoLoginManager.getInstance()

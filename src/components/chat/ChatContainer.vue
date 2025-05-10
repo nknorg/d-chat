@@ -164,7 +164,7 @@ onUnmounted(() => {
 
 watch(
   () => props.targetId,
-  (targetId, prevTargetId) => {
+  () => {
     unbindScrollEvent()
     init()
     nextTick(() => {
@@ -174,9 +174,12 @@ watch(
 )
 
 watch(
-  () => chatStore.currentTargetId,
-  async (newTargetId) => {
-    if (newTargetId && chatStore.currentTargetType === SessionType.TOPIC) {
+  [() => chatStore.currentTargetId, () => chatStore.currentTargetType],
+  async ([newTargetId, newTargetType], [oldTargetId, oldTargetType]) => {
+    if (oldTargetType == undefined && newTargetType) {
+      await init()
+    }
+    if (newTargetId && newTargetType === SessionType.TOPIC) {
       const contact = await contactStore.getContactInfo({ type: SessionType.TOPIC, address: newTargetId })
       isSubscribed.value = contact?.joined
     }

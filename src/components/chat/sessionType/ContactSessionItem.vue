@@ -70,7 +70,7 @@ import { useContactStore } from '@/stores/contact'
 import { useDialogStore } from '@/stores/dialog'
 import { useSessionStore } from '@/stores/session'
 import { formatChatTime } from '@/utils/format'
-import { ContactSchema, ContactService, logger, SessionSchema } from '@d-chat/core'
+import { ContactSchema, ContactService, logger, SessionSchema, SessionType } from '@d-chat/core'
 import { getCurrentInstance, onMounted, ref } from 'vue'
 
 const chatStore = useChatStore()
@@ -90,6 +90,11 @@ onMounted(async () => {
   const contact = await contactStore.getContactInfo({ type: props.item.targetType, address: props.item.targetId })
   if (contact) {
     contactInfo.value = contact
+  }
+
+  await chatStore.getCurrentChatTargetId()
+  if (chatStore.currentTargetId === props.item.targetId) {
+    selectedSession(props.item)
   }
 })
 
