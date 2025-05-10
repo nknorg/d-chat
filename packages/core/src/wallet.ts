@@ -48,15 +48,13 @@ export class WalletHelper {
   }
 
   async addWallet(wallet: WalletRecord) {
-    const wallets: WalletRecord[] =
-      ((await this.storage.getList(WALLET_KEY)) as WalletRecord[]) || []
+    const wallets: WalletRecord[] = ((await this.storage.getList(WALLET_KEY)) as WalletRecord[]) || []
     wallets.push(wallet)
     return await this.storage.setList(WALLET_KEY, wallets)
   }
 
   async deleteWallet(wallet: WalletRecord) {
-    const wallets: WalletRecord[] =
-      ((await this.storage.getList(WALLET_KEY)) as WalletRecord[]) || []
+    const wallets: WalletRecord[] = ((await this.storage.getList(WALLET_KEY)) as WalletRecord[]) || []
     const index = wallets.findIndex((w) => w.address === wallet.address)
     if (index >= 0) {
       wallets.splice(index, 1)

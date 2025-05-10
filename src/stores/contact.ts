@@ -52,11 +52,11 @@ export const useContactStore = defineStore(STORE_NAME, {
       let data
       if (type === SessionType.CONTACT) {
         const clientStore = useClientStore()
-        let conteactType = ContactType.STRANGER
+        let contactType = ContactType.STRANGER
         if (clientStore.lastSignInId === address) {
-          conteactType = ContactType.ME
+          contactType = ContactType.ME
         }
-        data = await application.service.call(ServiceType.dchat, 'getOrCreateContact', address, { type: conteactType })
+        data = await application.service.call(ServiceType.dchat, 'getOrCreateContact', address, { type: contactType })
       } else if (type === SessionType.TOPIC) {
         // First try to get from database
         data = await application.service.call(ServiceType.dchat, 'getTopicInfoFromDb', address)

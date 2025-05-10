@@ -16,7 +16,6 @@ port.onMessage.addListener(function (msg) {
     if (!msg.message.isOutbound) {
       const notificationStore = useNotificationStore()
       notificationStore.notification(msg.message)
-      notificationStore.playNotificationSound()
     }
     if (chatStore.currentTargetId == msg.message.targetId) {
       messageStore.addMessage(msg.message)

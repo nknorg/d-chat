@@ -1,7 +1,7 @@
 import { MessageSchema, SessionSchema } from '@d-chat/core'
 import { EventEmitter } from 'events'
 
-class DchatEventEmitter extends EventEmitter {}
+class DchatEventEmitter extends EventEmitter { }
 
 export const dchatEventEmitter = new DchatEventEmitter()
 

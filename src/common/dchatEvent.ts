@@ -12,7 +12,6 @@ export function addDchatEvents(ins: Dchat) {
     if (!message.isOutbound) {
       const notificationStore = useNotificationStore()
       notificationStore.notification(message)
-      notificationStore.playNotificationSound()
     }
 
     if (chatStore.currentTargetId == message.targetId) {

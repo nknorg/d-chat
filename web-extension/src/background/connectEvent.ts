@@ -2,9 +2,10 @@ import { ServiceType } from '@/common/service'
 import { ConnectEvent, MessageSchema, SessionSchema } from '@d-chat/core'
 import { EventEmitter } from 'events'
 import { dchatEventEmitter } from './dchatEvent'
+import { NotificationManager } from './notification'
 import { services } from './services'
 
-class ConnectEventEmitter extends EventEmitter {}
+class ConnectEventEmitter extends EventEmitter { }
 
 const connectEventEmitter = new ConnectEventEmitter()
 
@@ -25,7 +26,10 @@ ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
 ConnectEvent.onMessage = (_id: string, ...args: any[]) => {
   connectEventEmitter.emit('onMessage', _id, ...args)
   const [message] = args
-  services[ServiceType.dchat].handleMessage(message)
+  services[ServiceType.dchat].handleMessage(message).then(() => {
+    // notification
+    NotificationManager.getInstance().handleNewMessage(message)
+  })
 }
 
 ConnectEvent.onConnectFailed = (_id: string, ...args: any[]) => {

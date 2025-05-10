@@ -109,6 +109,13 @@ export interface ChatProtocol {
   ): Promise<MessageSchema[]>
 
   /**
+   * Retrieves a message by its ID
+   * @param messageId - The ID of the message to retrieve
+   * @returns Promise resolving to the message schema or null if not found
+   */
+  getMessageByMessageId(messageId: string): Promise<MessageSchema>
+
+  /**
    * Marks all messages as read for a specific target
    * @param targetId - The target identifier
    * @param targetType - The type of session

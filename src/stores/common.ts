@@ -1,15 +1,21 @@
-import { StoreAdapter } from '@d-chat/core'
+import { logger, StoreAdapter } from '@d-chat/core'
 import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
 
-let localStorage
-if (process.env.__APP_PLATFORM__ == 'electron') {
-} else if (process.env.__APP_PLATFORM__ == 'webext') {
-  const module = await import('../../web-extension/src/chromeStorage')
-  localStorage = new module.ChromeStorage('local')
-} else {
-  localStorage = StoreAdapter.localStorage
+let localStorage = StoreAdapter.localStorage
+
+// Initialize localStorage based on platform
+async function initLocalStorage() {
+  if (process.env.__APP_PLATFORM__ == 'electron') {
+    // Electron platform
+  } else if (process.env.__APP_PLATFORM__ == 'webext') {
+    const module = await import('../../web-extension/src/chromeStorage')
+    localStorage = new module.ChromeStorage('local')
+  }
 }
+
+// Initialize localStorage
+initLocalStorage().catch(logger.error)
 
 export const useCommonStore = defineStore('common', {
   state: (): { versions: any; deviceId: string } => {

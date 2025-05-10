@@ -45,18 +45,14 @@ export default {
   options_page: 'web-extension/src/ui/options/index.html',
   offline_enabled: true,
   host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'tabs', 'background', 'sidePanel'],
-  optional_permissions: ['notifications'],
-  // web_accessible_resources: [
-  //   {
-  //     resources: [
-  //       "src/ui/setup/index.html",
-  //       "src/ui/content-script-iframe/index.html",
-  //       "src/ui/devtools-panel/index.html",
-  //     ],
-  //     matches: ["<all_urls>"],
-  //   },
-  // ],
+  permissions: ['storage', 'tabs', 'background', 'notifications', 'sidePanel'],
+  // optional_permissions: ['notifications'],
+  web_accessible_resources: [
+    {
+      resources: ['assets/*'],
+      matches: ['<all_urls>']
+    }
+  ],
   icons: {
     16: 'assets/d-chat/logo.png',
     24: 'assets/d-chat/logo.png',

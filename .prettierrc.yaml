@@ -2,3 +2,4 @@ singleQuote: true
 semi: false
 printWidth: 180
 trailingComma: none
+"tabWidth": 2

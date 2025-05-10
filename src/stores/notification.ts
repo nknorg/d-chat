@@ -1,7 +1,7 @@
 import { push } from 'notivue'
 import { defineStore } from 'pinia'
 import { useSettingStore } from './setting'
-import { MessageSchema } from 'packages/core/dist'
+import { MessageContentType, MessageSchema } from '@d-chat/core'
 
 const STORE_NAME = 'notification'
 
@@ -81,6 +81,13 @@ export const useNotificationStore = defineStore(STORE_NAME, {
       if (!enableNotification) {
         return
       }
+
+      // Check message type
+      if (![MessageContentType.text, MessageContentType.image, MessageContentType.audio].includes(message.payload.contentType)) {
+        return
+      }
+
+      this.playNotificationSound()
       push.info({
         props: {
           type: NotificationType.MESSAGE_NOTIFICATION,

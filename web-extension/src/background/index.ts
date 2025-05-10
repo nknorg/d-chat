@@ -1,7 +1,8 @@
-import { StoreAdapter } from '@d-chat/core'
+import { logger, StoreAdapter } from '@d-chat/core'
 import { ChromeStorage } from '../chromeStorage'
 import { services } from './services'
 import { upgrade } from '../upgrade'
+import { AutoLoginManager } from './autoLogin'
 import './connectEvent'
 import './dchatEvent'
 
@@ -18,6 +19,12 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
     await upgrade()
     return
   }
+})
+
+// Try auto login when extension starts
+const autoLoginManager = AutoLoginManager.getInstance()
+autoLoginManager.tryAutoLogin().catch((error) => {
+  logger.error('Auto login failed:', error)
 })
 
 // @ts-ignore
