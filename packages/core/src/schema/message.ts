@@ -61,7 +61,11 @@ export class MessageSchema implements IMessageSchema {
     raw: Message,
     from: string,
     to: string,
-    { isOutbound = false }: { isOutbound?: boolean } = {}
+    {
+      isOutbound = false
+    }: {
+      isOutbound?: boolean
+    } = {}
   ): MessageSchema | null {
     if (raw.payloadType == PayloadType.TEXT) {
       let data: any
@@ -80,11 +84,7 @@ export class MessageSchema implements IMessageSchema {
       const groupId = data.groupId
       const targetId = topic != null ? topic : groupId != null ? groupId : sender
       const targetType =
-        topic != null
-          ? SessionType.TOPIC
-          : groupId != null
-            ? SessionType.PRIVATE_GROUP
-            : SessionType.CONTACT
+        topic != null ? SessionType.TOPIC : groupId != null ? SessionType.PRIVATE_GROUP : SessionType.CONTACT
 
       const now = Date.now()
       const payload = PayloadSchema.fromRawPayload(<string>raw.payload)
@@ -98,7 +98,7 @@ export class MessageSchema implements IMessageSchema {
         isOutbound: isOutbound,
         isDelete: false,
         status: MessageStatus.Sent,
-        sentAt: data.timestamp ?? now,
+        sentAt: Math.min(data.timestamp ?? now, now),
         payload: payload,
         receivedAt: now
       })
@@ -141,8 +141,7 @@ export class MessageSchema implements IMessageSchema {
       payload_id: this.payload.id,
       payload_type: this.payload.contentType,
       payload_content: this.payload.content,
-      payload_options:
-        this.payload.options != null ? JSON.stringify(this.payload.options) : undefined,
+      payload_options: this.payload.options != null ? JSON.stringify(this.payload.options) : undefined,
       status: this.status,
       is_outbound: this.isOutbound ? 1 : 0,
       sent_at: this.sentAt,

@@ -1,5 +1,7 @@
 singleQuote: true
 semi: false
-printWidth: 180
+printWidth: 120
 trailingComma: none
-"tabWidth": 2
+tabWidth: 2
+bracketSpacing: true
+arrowParens: always
