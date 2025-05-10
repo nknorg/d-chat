@@ -10,6 +10,11 @@
       </v-toolbar>
       <v-container>
         <v-card variant="outlined">
+          <v-card-title>{{ $t('version') }}</v-card-title>
+          <v-card-text>
+            <v-text-field variant="outlined" :model-value="version" hide-details readonly></v-text-field>
+          </v-card-text>
+
           <v-card-title>{{ $t('my_account') }}</v-card-title>
           <v-card-text>
             <v-menu>
@@ -109,6 +114,9 @@ import { WalletRecord } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import { ComponentPublicInstance, getCurrentInstance, onBeforeMount, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import packageJson from '../../../package.json'
+
+const version = packageJson.version
 
 const ins = getCurrentInstance()
 const proxy: ComponentPublicInstance = ins!.proxy!
