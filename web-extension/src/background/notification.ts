@@ -14,8 +14,27 @@ export class NotificationManager {
   public static getInstance(): NotificationManager {
     if (!NotificationManager.instance) {
       NotificationManager.instance = new NotificationManager()
+      NotificationManager.instance.initMessageListener()
     }
     return NotificationManager.instance
+  }
+
+  private initMessageListener() {
+    chrome.runtime.onMessage.addListener((
+      message: { type: string },
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: any) => void
+    ) => {
+      if (message.type === 'UPDATE_BADGE_COUNT') {
+        this.updateUnreadCount().then(() => {
+          sendResponse({ success: true })
+        }).catch((error) => {
+          logger.error('Failed to update unread count:', error)
+          sendResponse({ success: false, error: error.message })
+        })
+        return true
+      }
+    })
   }
 
   private async getEnableNotification(): Promise<boolean> {
@@ -85,6 +104,19 @@ export class NotificationManager {
     })
   }
 
+  public async updateUnreadCount() {
+    try {
+      const unreadCount = await services[ServiceType.dchat].getUnreadMessageCount()
+      if (unreadCount > 0) {
+        chrome.action.setBadgeText({ text: unreadCount.toString() })
+      } else {
+        chrome.action.setBadgeText({ text: '' })
+      }
+    } catch (error) {
+      logger.error('Failed to update unread count:', error)
+    }
+  }
+
   public async handleNewMessage(raw: Message) {
     // Check if notification is enabled
     const enableNotification = await this.getEnableNotification()
@@ -105,5 +137,6 @@ export class NotificationManager {
     }
 
     await this.showBrowserNotification(message, contactInfo)
+    await this.updateUnreadCount()
   }
 }

@@ -67,6 +67,8 @@ export interface IMessageDb {
 
   getUnreadMessages(targetId: string, targetType: SessionType): Promise<MessageDbModel[]>
 
+  getUnreadMessageCount(): Promise<number>
+
   markMessagesAsDeleted(targetId: string, targetType: SessionType): Promise<void>
 }
 
@@ -246,6 +248,19 @@ export class MessageDb implements IMessageDb {
         .equals([targetId, targetType, 0, 0])
         .and((item) => item.status < MessageStatus.Read)
         .toArray()
+    } catch (e) {
+      logger.error(e)
+      throw e
+    }
+  }
+
+  async getUnreadMessageCount(): Promise<number> {
+    try {
+      return await this.db.table(MessageDb.tableName)
+        .where('is_delete')
+        .equals(0)
+        .and((item) => item.status < MessageStatus.Read)
+        .count()
     } catch (e) {
       logger.error(e)
       throw e

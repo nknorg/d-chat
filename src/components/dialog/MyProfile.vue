@@ -22,6 +22,9 @@
               <v-avatar variant="tonal" density="comfortable" color="white" class="position-absolute bottom-0 right-0">
                 <Icon icon="material-symbols:flip-camera-ios-outline-rounded" width="30" height="30" class="cursor-pointer" @click="handleAvatarClick" />
               </v-avatar>
+              <v-btn v-if="state.avatarUrl" icon variant="text" density="comfortable" color="error" class="position-absolute top-0 right-0" @click="clearAvatar">
+                <Icon icon="material-symbols:close" width="24" height="24" />
+              </v-btn>
               <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileChange" />
             </div>
           </v-col>
@@ -239,6 +242,15 @@ const handleCroppedImage = async (result: { base64: string; blob: Blob; file: Fi
   }
 }
 
+const clearAvatar = () => {
+  if (state.avatarUrl) {
+    URL.revokeObjectURL(state.avatarUrl)
+  }
+  state.avatarUrl = ''
+  state.avatarFile = null
+  state.tempImageFile = null
+}
+
 async function save() {
   try {
     const updates: Partial<IContactSchema> = {
@@ -246,13 +258,26 @@ async function save() {
       firstName: state.nickname
     }
 
-    // If there's a new avatar file, cache it and update the avatar ID
+    // Handle avatar updates
     if (state.avatarFile) {
+      // If there's a new avatar file, cache it and update the avatar ID
       const cacheStore = useCacheStore()
       const avatarId = await cacheStore.setAvatar(state.avatarFile)
       updates.avatar = avatarId
       // Clear the file after caching
       state.avatarFile = null
+    } else if (!state.avatarUrl) {
+      // If avatar is cleared (no URL and no file), set avatar to null
+      updates.avatar = null
+      // Clear any existing avatar cache
+      const cacheStore = useCacheStore()
+      const contact = await contactStore.queryContactInfo({
+        type: SessionType.CONTACT,
+        address: clientStore.lastSignInId
+      })
+      if (contact?.avatar) {
+        cacheStore.clearCache(contact.avatar)
+      }
     }
 
     // Update contact info

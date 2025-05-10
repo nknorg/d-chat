@@ -664,6 +664,12 @@ export class Dchat implements ChatProtocol {
     return message ? MessageSchema.fromDbModel(message) : null
   }
 
+  async getUnreadMessageCount(): Promise<number> {
+    const messageDb = new MessageDb(this.db)
+    const count = await messageDb.getUnreadMessageCount()
+    return count || 0
+  }
+
   async readAllMessagesByTargetId(targetId: string, targetType: SessionType): Promise<void> {
     try {
       const messageDb = new MessageDb(this.db)

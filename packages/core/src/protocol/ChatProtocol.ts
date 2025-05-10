@@ -116,6 +116,12 @@ export interface ChatProtocol {
   getMessageByMessageId(messageId: string): Promise<MessageSchema>
 
   /**
+   * Retrieves the count of all unread messages
+   * @returns Promise resolving to the count of unread messages
+   */
+  getUnreadMessageCount(): Promise<number>
+
+  /**
    * Marks all messages as read for a specific target
    * @param targetId - The target identifier
    * @param targetType - The type of session

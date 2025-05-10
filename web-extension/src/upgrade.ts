@@ -25,7 +25,7 @@ export async function upgrade() {
           if (splitAddr.length > 1) {
             publicKey = splitAddr[1]
           }
-          let walletAddr = client.wallet.Address
+          const walletAddr = client.wallet.Address
           const wallet: WalletRecord = {
             address: walletAddr,
             name: client.identifier,
