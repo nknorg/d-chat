@@ -21,8 +21,31 @@
       </v-layout>
       <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent>
         <MessageContent :message="props.message" />
+        <div v-if="state.translateExpanded">
+          <v-row>
+            <v-col class="align-self-center">
+              <v-divider />
+            </v-col>
+            <v-col cols="auto pr-0">
+              <v-chip size="small" variant="tonal" density="compact">
+                {{ $t('translate') }}
+              </v-chip>
+            </v-col>
+            <v-col class="align-self-center">
+              <v-divider />
+            </v-col>
+          </v-row>
+          <div>
+            {{ state.translateResult }}
+          </div>
+        </div>
         <div class="footer">
           <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
+        </div>
+        <div class="tools">
+          <v-btn v-if="state.hasTranslator" :loading="state.translateLoading" icon variant="plain" density="compact" @click="translate(props.message.payload.content)">
+            <Icon icon="bi:translate" />
+          </v-btn>
         </div>
       </v-alert>
     </v-col>
@@ -50,9 +73,10 @@
   </v-alert>
 </template>
 <script setup lang="ts">
+import { AiTranslator } from '@/ai/translator'
 import { MessageContentType, MessageSchema, SessionType, ContactSchema, ContactService, MessageStatus } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
-import { defineProps, ref, onMounted } from 'vue'
+import { defineProps, ref, onMounted, reactive } from 'vue'
 import { formatChatTime } from '@/utils/format'
 import { useContactStore } from '@/stores/contact'
 import ContactAvatar from '../contact/ContactAvatar.vue'
@@ -75,12 +99,37 @@ onMounted(async () => {
     }
   }
 })
+
+const translator: AiTranslator | null = AiTranslator.getInstance()
+const state = reactive<{
+  hasTranslator: boolean
+  translateExpanded: boolean
+  translateResult: string | null
+  translateLoading: boolean
+}>({
+  hasTranslator: translator !== null,
+  translateExpanded: false,
+  translateResult: null,
+  translateLoading: false
+})
+
+async function translate(text: string) {
+  if (translator) {
+    state.translateLoading = true
+    state.translateResult = await translator.translate(text)
+    if (state.translateResult) {
+      state.translateExpanded = true
+    }
+    state.translateLoading = false
+  }
+}
 </script>
-<style>
+<style lang="scss">
 .alert {
   flex-grow: 0 !important;
   overflow: unset !important;
   width: fit-content;
+  padding-bottom: 8px;
 }
 
 .target-alert {
@@ -95,6 +144,12 @@ onMounted(async () => {
 }
 
 .footer {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
+
+.tools {
   display: flex;
   justify-content: end;
   align-items: center;

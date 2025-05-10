@@ -21,7 +21,7 @@
               </v-text-field>
             </v-row>
           </v-card-text>
-          <v-card-text>
+          <v-card-text style="max-height: 50vh; overflow-y: auto;">
             <PopularChannels @close="closeDialog" />
           </v-card-text>
           <v-card-actions>
