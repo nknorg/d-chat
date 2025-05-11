@@ -1,11 +1,11 @@
 <template>
-  <svg aria-hidden="true" :style="{width: size, height: size }">
-    <use :href="symbolId" :fill="color"/>
+  <svg aria-hidden="true" :style="{ width: size, height: size }">
+    <use :href="symbolId" :fill="color" />
   </svg>
 </template>
 
 <script lang="ts">
-import {defineComponent, computed} from 'vue'
+import { defineComponent, computed } from 'vue'
 
 export default defineComponent({
   name: 'SvgIcon',
@@ -29,7 +29,7 @@ export default defineComponent({
   },
   setup(props) {
     const symbolId = computed(() => `#${props.prefix}-${props.name}`)
-    return {symbolId}
+    return { symbolId }
   },
 })
 </script>

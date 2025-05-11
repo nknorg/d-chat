@@ -8,7 +8,7 @@ import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // Utilities
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import vuetify from 'vite-plugin-vuetify'
 
@@ -32,6 +32,17 @@ export default defineConfig({
     skipWebSocketTokenCheck: true
   },
   plugins: [
+    {
+      name: 'inject-meta',
+      transformIndexHtml(html) {
+        const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd())
+        return html.replace(
+          /<head>/,
+          `<head>
+  <meta http-equiv="origin-trial" content="${env.VITE_WEB_META_ORIGIN_TRIAL}" />`
+        )
+      }
+    },
     nodePolyfills({
       include: ['buffer'],
       globals: {
@@ -39,7 +50,6 @@ export default defineConfig({
         global: true,
         process: true
       },
-
       protocolImports: true
     }),
     Components({
@@ -83,7 +93,6 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@assets': resolve(__dirname, 'assets')
     },
-
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue']
   },
   css: {
@@ -97,15 +106,6 @@ export default defineConfig({
     port: PORT,
     hmr: {
       host: 'localhost'
-    },
-    origin: `http://localhost:${PORT}`,
-    cors: {
-      origin: [
-        // ⚠️ SECURITY RISK: Allows any chrome-extension to access the vite server ⚠️
-        // See https://github.com/crxjs/chrome-extension-tools/issues/971 for more info
-        // I don't believe that the linked issue mentions a potential solution
-        /chrome-extension:\/\//
-      ]
     }
   }
 })

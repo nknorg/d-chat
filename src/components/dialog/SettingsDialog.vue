@@ -114,9 +114,8 @@ import { WalletRecord } from '@d-chat/core'
 import { Icon } from '@iconify/vue'
 import { ComponentPublicInstance, getCurrentInstance, onBeforeMount, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import packageJson from '../../../package.json'
 
-const version = packageJson.version
+const version = process.env.__VERSION__
 
 const ins = getCurrentInstance()
 const proxy: ComponentPublicInstance = ins!.proxy!

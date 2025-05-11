@@ -1,6 +1,6 @@
 import { crx } from '@crxjs/vite-plugin'
 import fs from 'node:fs'
-import { defineConfig, mergeConfig, UserConfig, PluginOption } from 'vite'
+import { defineConfig, mergeConfig, UserConfig, PluginOption, loadEnv } from 'vite'
 import zipPack from 'vite-plugin-zip-pack'
 import manifest from './manifest.chrome.config'
 import packageJson from './package.json' with { type: 'json' }
@@ -38,16 +38,18 @@ const createBuildMessagePlugin = (isDev: boolean): PluginOption => ({
   enforce: 'post' as const,
   ...(isDev
     ? {
-        configureServer(server) {
-          server.httpServer?.once('listening', () => printMessage(true))
-        }
+      configureServer(server) {
+        server.httpServer?.once('listening', () => printMessage(true))
       }
+    }
     : {}),
   closeBundle: { sequential: true, handler: () => printMessage(isDev) }
 })
 
 // Define browser-specific configuration
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd())
+
   // Create plugins based on environment
   const browserPlugins: PluginOption[] = [
     {
@@ -56,6 +58,16 @@ export default defineConfig(() => {
         ;['dist/chrome'].forEach((dir) => {
           if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
         })
+      }
+    },
+    {
+      name: 'inject-meta',
+      transformIndexHtml(html) {
+        return html.replace(
+          /<head>/,
+          `<head>
+  <meta http-equiv="origin-trial" content="${env.VITE_CHROME_META_ORIGIN_TRIAL}" />`
+        )
       }
     },
     crx({
@@ -90,6 +102,16 @@ export default defineConfig(() => {
       }
     },
     plugins: browserPlugins
+  }
+
+  // Remove baseConfig inject-meta plugin
+  if (baseConfig.plugins) {
+    baseConfig.plugins = baseConfig.plugins.filter(plugin => {
+      if (typeof plugin === 'object' && plugin && 'name' in plugin) {
+        return plugin.name !== 'inject-meta'
+      }
+      return true
+    })
   }
 
   // Merge with base config and return
