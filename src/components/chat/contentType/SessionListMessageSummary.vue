@@ -1,9 +1,9 @@
 <template>
-  <span v-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.image">
-    <svg-icon name="image" :size="18" />
-  </span>
-  <span v-else-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.text">
+  <span v-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.text">
     {{ props.sessionItem.lastMessagePayload.content }}
+  </span>
+  <span v-else-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.media">
+    <svg-icon name="image" :size="18" />
   </span>
   <span v-else-if="props.sessionItem.lastMessagePayload?.contentType === MessageContentType.audio">
     <svg-icon name="microphone" :size="18" />

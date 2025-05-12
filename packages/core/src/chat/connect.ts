@@ -93,7 +93,7 @@ export class Connect {
     client.onConnectFailed(() => {
       logger.error(`connect failed. Address: ${client.addr}`)
       ConnectEvent.onConnectFailed?.(id)
-      
+
       // Handle clientConnectPromises on failure
       if (this.clientConnectPromises[id]) {
         this.clientConnectPromises[id].reject(new Error(`Client ${id} connection failed`))
@@ -118,11 +118,11 @@ export class Connect {
     const publicKey = wallet.getPublicKey()
     const id = !options.identifier ? publicKey : `${options.identifier}.${publicKey}`
     if (this.clients[id] != null) {
-      await this.clients[id].close()
+      this.clients[id].close()
     }
-    const client = new MultiClient(options)
-    this.clients[client.addr] = client
 
+    const client = new MultiClient(options)
+    this.clients[id] = client
     return id
   }
 
@@ -145,7 +145,7 @@ export class Connect {
 
   static async waitForConnect(timeout: number = 30000): Promise<void> {
     if (!this.lastSignInId) {
-      throw new Error('No client is connecting')
+      logger.error('No client is connecting')
     }
     return this.waitForClientConnect(this.lastSignInId, timeout)
   }

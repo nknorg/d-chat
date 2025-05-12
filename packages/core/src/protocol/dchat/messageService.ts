@@ -37,6 +37,17 @@ export class MessageService {
     return this.fillPayloadFields({ content }, body)
   }
 
+  static createMediaPayload(data: string, body?: MessageBody, options?: MediaOptions): IPayloadSchema {
+    return this.fillPayloadFields(
+      {
+        contentType: MessageContentType.media,
+        content: `![image](${data})`
+      },
+      body,
+      options as Partial<PayloadOptions>
+    )
+  }
+
   static createAudioPayload(data: string, body?: MessageBody, options?: MediaOptions): IPayloadSchema {
     return this.fillPayloadFields(
       {
@@ -47,6 +58,18 @@ export class MessageService {
       options as Partial<PayloadOptions>
     )
   }
+
+  static createImagePayload(data: string, body?: MessageBody, options?: MediaOptions): IPayloadSchema {
+    return this.fillPayloadFields(
+      {
+        contentType: MessageContentType.image,
+        content: `![image](${data})`
+      },
+      body,
+      options as Partial<PayloadOptions>
+    )
+  }
+
 
   static createReceiptPayload(msgId: string, body?: MessageBody): IPayloadSchema & { targetID: string } {
     return {

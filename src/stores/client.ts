@@ -25,9 +25,10 @@ export const useClientStore = defineStore(STORE_NAME, {
       if (process.env.__APP_PLATFORM__ == 'webext') {
         await Db.openDb(wallet.getPublicKey(), seed)
       }
-
-      application.service.call(ServiceType.dchat, 'init')
       this.lastSignInId = await application.service.call(ServiceType.Connect, 'connect', seed)
+
+      await application.service.call(ServiceType.dchat, 'init')
+
       // get MyProfile
       const contactStore = useContactStore()
       contactStore.getMyProfile().catch((err) => logger.error(err))

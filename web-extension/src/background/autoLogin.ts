@@ -54,8 +54,8 @@ export class AutoLoginManager {
       }
 
       await services[ServiceType.Db].openDb(publicKey, seed)
-      await services[ServiceType.dchat].init()
       await services[ServiceType.Connect].connect(seed)
+      await services[ServiceType.dchat].init()
 
       logger.info('Auto login successful')
       return true

@@ -6,7 +6,6 @@ import { ConnectEvent, ConnectionStatus } from '@d-chat/core'
 const clientStore = useClientStore()
 // @ts-ignore
 ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
-  services[ServiceType.dchat].init()
   addDchatEvents(services[ServiceType.dchat])
   clientStore.connectStatus = ConnectionStatus.Connected
 }

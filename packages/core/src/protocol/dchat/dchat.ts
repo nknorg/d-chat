@@ -60,11 +60,11 @@ export class Dchat implements ChatProtocol {
   }
 
   async receiveImage(message: MessageSchema) {
-    // const messageDb = new MessageDb(this.db)
-    // const msgRecord = await messageDb.queryByMsgId(message.msgId)
-    // if (!msgRecord) {
-    //   const ok = await messageDb.insert(message.toDbModel())
-    // }
+    // TODO: receive image
+  }
+
+  async receiveFile(message: MessageSchema) {
+    // TODO: receive file
   }
 
   async receiveReceiptMessage(payloadId: string) {
@@ -248,16 +248,48 @@ export class Dchat implements ChatProtocol {
     }
   }
 
+  async receiveMedia(message: MessageSchema) {
+    try {
+      if (!this.db) return
+      const messageDb = new MessageDb(this.db)
+      const msgRecord = await messageDb.queryByPayloadId(message.payload.id)
+      if (!msgRecord) {
+        await messageDb.insert(message.toDbModel())
+        this._addMessage?.(message)
+        await this.handleSession(message)
+      }
+    } catch (e) {
+      logger.error('Failed to handle media message:', e)
+    }
+  }
+
   async handleMessage(raw: Message) {
+    // Check if client is initialized
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+        this.client = Connect.getLastSignClient()
+        if (!this.client?.isReady) {
+          logger.error('Client is not ready after waiting for connect')
+          return
+        }
+      } catch (e) {
+        logger.error('Failed to initialize client:', e)
+        return
+      }
+    }
+
     if (raw.payloadType == PayloadType.TEXT) {
       let data: any
       try {
         data = JSON.parse(<string>raw.payload)
       } catch (e) {
-        logger.error(e)
+        logger.error('Failed to parse message payload:', e)
+        return
       }
 
       if (data == null || data.id == null || data.contentType == null) {
+        logger.error('Invalid message payload:', data)
         return
       }
 
@@ -265,93 +297,102 @@ export class Dchat implements ChatProtocol {
       let sessionType = 0
       let messageStatus = MessageStatus.Error
 
-      const message = MessageSchema.fromRawMessage(raw, raw.src, this.client.addr, {
-        isOutbound: raw.src === this.client.addr
-      })
-      // Set received time for incoming messages
-      if (!message.isOutbound) {
-        message.receivedAt = Date.now()
-      }
-
-      if (payload.topic != null) {
-        sessionType = SessionType.TOPIC
-        await this.handleContact(message)
-        await this.handleTopic(message)
-      } else if (payload.groupId != null) {
-        sessionType = SessionType.PRIVATE_GROUP
-      } else {
-        sessionType = SessionType.CONTACT
-        await this.handleContact(message)
-      }
-      messageStatus = MessageStatus.Sent
-
-      switch (payload.contentType) {
-        case MessageContentType.receipt:
-          this.receiveReceiptMessage(data['targetID'])
+      try {
+        const message = MessageSchema.fromRawMessage(raw, raw.src, this.client?.addr || Connect.getLastSignInId(), {
+          isOutbound: raw.src === this.client.addr
+        })
+        if (!message) {
+          logger.error('Failed to create message schema from raw message')
           return
-        case MessageContentType.read:
-          this.receiveReadMessage(data['readIds'])
-          return
-        case MessageContentType.text:
-        case MessageContentType.image:
-        case MessageContentType.video:
-        case MessageContentType.audio:
-        case MessageContentType.file:
-          if (sessionType == SessionType.CONTACT) {
-            this.receipt(raw.src, payload.id)
-            messageStatus = MessageStatus.Sent | MessageStatus.Receipt
-          }
-          break
+        }
 
-        case MessageContentType.topicSubscribe:
-          this.receiveTopicSubscribeMessage(raw.src, payload.topic).catch((e) => {
-            logger.error('Failed to receive topic subscribe message:', e)
-          })
-          break
-        case MessageContentType.topicUnsubscribe:
-          this.receiveTopicUnsubscribeMessage(raw.src, payload.topic).catch((e) => {
-            logger.error('Failed to receive topic unsubscribe message:', e)
-          })
-          break
-        case MessageContentType.contactProfile:
-          if ('requestType' in data) {
-            this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string; version: string }).catch((e) => {
-              logger.error('Failed to receive contact request message:', e)
+        // Set received time for incoming messages
+        if (!message.isOutbound) {
+          message.receivedAt = Date.now()
+        }
+
+        if (payload.topic != null) {
+          sessionType = SessionType.TOPIC
+          await this.handleContact(message)
+          await this.handleTopic(message)
+        } else if (payload.groupId != null) {
+          sessionType = SessionType.PRIVATE_GROUP
+        } else {
+          sessionType = SessionType.CONTACT
+          await this.handleContact(message)
+        }
+        messageStatus = MessageStatus.Sent
+
+        switch (payload.contentType) {
+          case MessageContentType.receipt:
+            await this.receiveReceiptMessage(data['targetID'])
+            return
+          case MessageContentType.read:
+            await this.receiveReadMessage(data['readIds'])
+            return
+          case MessageContentType.text:
+          case MessageContentType.media:
+          case MessageContentType.image:
+          case MessageContentType.video:
+          case MessageContentType.audio:
+          case MessageContentType.file:
+            if (sessionType == SessionType.CONTACT) {
+              await this.receipt(raw.src, payload.id)
+              messageStatus = MessageStatus.Sent | MessageStatus.Receipt
+            }
+            break
+          case MessageContentType.topicSubscribe:
+            await this.receiveTopicSubscribeMessage(raw.src, payload.topic).catch((e) => {
+              logger.error('Failed to receive topic subscribe message:', e)
             })
-          } else if ('responseType' in data) {
-            this.receiveContactResponseMessage(
-              raw.src,
-              data as IPayloadSchema & {
-                responseType: string
-                version: string
-                content: {
-                  avatar: {
-                    type: string
-                    data: string
-                    ext: string
+            return
+          case MessageContentType.topicUnsubscribe:
+            await this.receiveTopicUnsubscribeMessage(raw.src, payload.topic).catch((e) => {
+              logger.error('Failed to receive topic unsubscribe message:', e)
+            })
+            return
+          case MessageContentType.contactProfile:
+            if ('requestType' in data) {
+              await this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string; version: string }).catch((e) => {
+                logger.error('Failed to receive contact request message:', e)
+              })
+            } else if ('responseType' in data) {
+              await this.receiveContactResponseMessage(
+                raw.src,
+                data as IPayloadSchema & {
+                  responseType: string
+                  version: string
+                  content: {
+                    avatar: {
+                      type: string
+                      data: string
+                      ext: string
+                    }
+                    name: string
                   }
-                  name: string
                 }
-              }
-            ).catch((e) => {
-              logger.error('Failed to receive contact response message:', e)
-            })
-          }
-          return
-        default:
-          logger.error('not support message type')
-          return
-      }
+              ).catch((e) => {
+                logger.error('Failed to receive contact response message:', e)
+              })
+            }
+            return
+          default:
+            logger.error('Unsupported message type:', payload.contentType)
+            return
+        }
 
-      if (sessionType == 0) {
-        logger.error('sessionType is not processed')
-        return
-      }
+        if (sessionType == 0) {
+          logger.error('sessionType is not processed')
+          return
+        }
 
-      const record = await this.saveMessage(message)
-      if (record != null) {
-        this._addMessage?.(record)
-        await this.handleSession(record)
+        const record = await this.saveMessage(message)
+        if (record != null) {
+          this._addMessage?.(record)
+          await this.handleSession(record)
+        }
+      } catch (e) {
+        logger.error('Failed to handle message:', e)
       }
     }
   }
@@ -600,6 +641,44 @@ export class Dchat implements ChatProtocol {
       }
     }
     const payload = new PayloadSchema(MessageService.createAudioPayload(data, { deviceId: this._deviceId }, options))
+    if (type == SessionType.TOPIC) {
+      payload.topic = to
+    } else if (type == SessionType.PRIVATE_GROUP) {
+      payload.groupId = to
+    }
+
+    return this.sendMessage(type, to, payload, MessageService.createMessageId())
+  }
+
+  async sendImage(type: SessionType, to: string, data: string, options?: MediaOptions): Promise<MessageSchema> {
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
+    }
+    const payload = new PayloadSchema(MessageService.createImagePayload(data, { deviceId: this._deviceId }, options))
+    if (type == SessionType.TOPIC) {
+      payload.topic = to
+    } else if (type == SessionType.PRIVATE_GROUP) {
+      payload.groupId = to
+    }
+
+    return this.sendMessage(type, to, payload, MessageService.createMessageId())
+  }
+
+  async sendMedia(type: SessionType, to: string, data: string, options?: MediaOptions): Promise<MessageSchema> {
+    if (!this.client?.isReady) {
+      try {
+        await Connect.waitForConnect()
+      } catch (e) {
+        logger.error(e)
+        throw e
+      }
+    }
+    const payload = new PayloadSchema(MessageService.createMediaPayload(data, { deviceId: this._deviceId }, options))
     if (type == SessionType.TOPIC) {
       payload.topic = to
     } else if (type == SessionType.PRIVATE_GROUP) {

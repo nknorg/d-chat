@@ -5,6 +5,7 @@ export enum MessageContentType {
   text = 'text',
   textExtension = 'textExtension',
   ipfs = 'ipfs',
+  media = 'media',
   image = 'image',
   audio = 'audio',
   video = 'video',
