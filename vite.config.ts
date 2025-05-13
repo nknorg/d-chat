@@ -1,14 +1,13 @@
 // Plugins
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
-import Fonts from 'unplugin-fonts/vite'
 import Components from 'unplugin-vue-components/vite'
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // Utilities
 import { defineConfig, loadEnv } from 'vite'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import vuetify from 'vite-plugin-vuetify'
 
@@ -66,14 +65,6 @@ export default defineConfig({
       styles: {
         configFile: 'src/styles/settings.scss'
       }
-    }),
-    Fonts({
-      // google: {
-      //   families: [{
-      //     name: 'Roboto',
-      //     styles: 'wght@100;300;400;500;700;900'
-      //   }]
-      // }
     }),
     createSvgIconsPlugin({
       // Specify the icon folder to be cached
