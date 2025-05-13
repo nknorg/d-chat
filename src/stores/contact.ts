@@ -84,6 +84,8 @@ export const useContactStore = defineStore(STORE_NAME, {
         if (contact.address === useClientStore().lastSignInId && this.myProfile) {
           Object.assign(this.myProfile, contact)
         }
+      } else {
+        this.contactInfoMap[key] = { type: SessionType.CONTACT, address: contact.address, data: contact }
       }
     }
   }
