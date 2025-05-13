@@ -32,8 +32,9 @@ export class Db {
 
     db.version(4).stores({
       messages:
-        '++id, &message_id, &payload_id, sent_at, received_at, [is_outbound+is_delete], [target_id+target_type], [target_id+target_type+is_delete+sent_at], [target_id+target_type+is_outbound+is_delete], [payload_id+status]',
-      sessions: '++id, target_id, target_type, last_message_outbound, last_message_at, un_read_count, is_top, &[target_id+target_type], [is_top+last_message_at]',
+        '++id, &message_id, payload_id, sent_at, received_at, [payload_id+payload_type], [is_outbound+is_delete], [target_id+target_type], [target_id+target_type+is_delete+sent_at], [target_id+target_type+is_outbound+is_delete], [payload_id+status]',
+      sessions:
+        '++id, target_id, target_type, last_message_outbound, last_message_at, un_read_count, is_top, &[target_id+target_type], [is_top+last_message_at]',
       topics: '++id, &topic, created_at, updated_at, joined, subscribe_at, expire_height, avatar, count',
       subscribers: '++id, topic, created_at, updated_at, contact_address, status, &[topic+contact_address]',
       contacts: '++id, &address, created_at, updated_at, first_name, last_name, [type+created_at], [type+updated_at]',

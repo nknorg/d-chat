@@ -1,7 +1,7 @@
 import Dexie from 'dexie'
 import { SessionType } from '../../schema/sessionEnum'
 import { logger } from '../../utils/log'
-import { MessageStatus } from '../../schema/messageEnum'
+import { MessageContentType, MessageStatus } from '../../schema/messageEnum'
 
 export interface MessageDbModel {
   id?: number
@@ -70,6 +70,8 @@ export interface IMessageDb {
   getUnreadMessageCount(): Promise<number>
 
   markMessagesAsDeleted(targetId: string, targetType: SessionType): Promise<void>
+
+  queryByPayloadIdAndPayloadType(payloadId: string, payloadType: MessageContentType): Promise<MessageDbModel[]>
 }
 
 export class MessageDb implements IMessageDb {
@@ -319,6 +321,19 @@ export class MessageDb implements IMessageDb {
         })
     } catch (e) {
       logger.error(e)
+      throw e
+    }
+  }
+
+  async queryByPayloadIdAndPayloadType(payloadId: string, payloadType: MessageContentType): Promise<MessageDbModel[]> {
+    try {
+      return await this.db
+        .table(MessageDb.tableName)
+        .where(['payload_id', 'payload_type'])
+        .equals([payloadId, payloadType])
+        .toArray()
+    } catch (e) {
+      logger.error('Failed to query messages by payload_id and payload_type:', e)
       throw e
     }
   }

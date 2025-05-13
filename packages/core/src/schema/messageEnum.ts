@@ -10,7 +10,7 @@ export enum MessageContentType {
   audio = 'audio',
   video = 'video',
   file = 'file',
-  piece = 'piece',
+  piece = 'nknOnePiece',
 
   topicSubscribe = 'event:subscribe',
   topicUnsubscribe = 'event:unsubscribe',
@@ -29,7 +29,9 @@ export enum MessageContentType {
   contactProfile = 'contact',
   contactOptions = 'contact:options',
   deviceRequest = 'device:request',
-  deviceInfo = 'device:info'
+  deviceInfo = 'device:info',
+
+  queue = 'queue'
 }
 
 export enum MessageStatus {

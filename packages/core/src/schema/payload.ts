@@ -9,8 +9,22 @@ export interface MediaOptions {
   audioDuration: number
 }
 
-export interface PayloadOptions extends Partial<MediaOptions> {
+export interface PieceOptions {
+  piece_index: number
+  piece_total: number
+  piece_parity: number
+  piece_parent_type: string
+  piece_bytes_length: number
+  fileExt: string
+  fileType: number
+}
+
+export interface PayloadOptions extends Partial<MediaOptions>, Partial<PieceOptions> {
+  deviceId?: string
   profileVersion?: string
+  deleteAfterSeconds?: number
+  updateBurnAfterAt?: number
+  deviceProfile?: string
 }
 
 export interface IPayloadSchema {

@@ -12,7 +12,7 @@ import { SubscriberSchema } from '../../schema/subscriber'
 import { SubscriberStatus } from '../../schema/subscriberEnum'
 import { TopicSchema } from '../../schema/topic'
 import { StoreAdapter } from '../../store/storeAdapter'
-import { genChannelId } from '../../utils/hash'
+import { bytesToHex, genChannelId } from '../../utils/hash'
 import { logger } from '../../utils/log'
 import { AddMessageHandler, ChatProtocol, UpdateMessageHandler, UpdateSessionHandler } from '../ChatProtocol'
 import { ContactDb } from '../database/contact'
@@ -330,6 +330,10 @@ export class Dchat implements ChatProtocol {
           case MessageContentType.read:
             await this.receiveReadMessage(data['readIds'])
             return
+          // TODO
+          // case MessageContentType.piece:
+          //   await this.receivePieceMessage(message)
+          //   return
           case MessageContentType.text:
           case MessageContentType.media:
           case MessageContentType.image:
@@ -353,7 +357,13 @@ export class Dchat implements ChatProtocol {
             return
           case MessageContentType.contactProfile:
             if ('requestType' in data) {
-              await this.receiveContactRequestMessage(raw.src, data as IPayloadSchema & { requestType: string; version: string }).catch((e) => {
+              await this.receiveContactRequestMessage(
+                raw.src,
+                data as IPayloadSchema & {
+                  requestType: string
+                  version: string
+                }
+              ).catch((e) => {
                 logger.error('Failed to receive contact request message:', e)
               })
             } else if ('responseType' in data) {
@@ -492,7 +502,7 @@ export class Dchat implements ChatProtocol {
     if (!this.db) return message
     try {
       const messageDb = new MessageDb(this.db)
-      const messRecord = await messageDb.queryByPayloadId(message.payload.id)
+      const messRecord = await messageDb.queryByMessageId(bytesToHex(message.messageId))
       if (messRecord) {
         return null
       }
@@ -547,7 +557,12 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  private async sendMessage(type: SessionType, to: string, payload: PayloadSchema, messageId: Uint8Array): Promise<MessageSchema> {
+  private async sendMessage(
+    type: SessionType,
+    to: string,
+    payload: PayloadSchema,
+    messageId: Uint8Array
+  ): Promise<MessageSchema> {
     const message = new MessageSchema({
       deviceId: this._deviceId ?? '',
       isOutbound: true,
@@ -701,7 +716,10 @@ export class Dchat implements ChatProtocol {
     return null
   }
 
-  async getSessionByTargetId(targetId: string, targetType: SessionType = SessionType.CONTACT): Promise<SessionSchema | null> {
+  async getSessionByTargetId(
+    targetId: string,
+    targetType: SessionType = SessionType.CONTACT
+  ): Promise<SessionSchema | null> {
     try {
       const sessionDb = new SessionDb(this.db)
       const record = await sessionDb.query(targetId, targetType)
@@ -903,7 +921,20 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async subscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
+  async subscribeTopic(
+    topic: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: {
+      nonce?: number
+      fee?: number
+      identifier?: string
+      meta?: string
+    } = {}
+  ): Promise<void> {
     try {
       if (!this.client?.isReady) {
         try {
@@ -949,7 +980,20 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async unsubscribeTopic(topic: string, { nonce, fee, identifier, meta }: { nonce?: number; fee?: number; identifier?: string; meta?: string } = {}): Promise<void> {
+  async unsubscribeTopic(
+    topic: string,
+    {
+      nonce,
+      fee,
+      identifier,
+      meta
+    }: {
+      nonce?: number
+      fee?: number
+      identifier?: string
+      meta?: string
+    } = {}
+  ): Promise<void> {
     try {
       if (!this.client?.isReady) {
         try {
@@ -1136,7 +1180,15 @@ export class Dchat implements ChatProtocol {
     }
   }
 
-  async getContactList({ type, offset = 0, limit = 50 }: { type?: ContactType; offset?: number; limit?: number }): Promise<string[]> {
+  async getContactList({
+    type,
+    offset = 0,
+    limit = 50
+  }: {
+    type?: ContactType
+    offset?: number
+    limit?: number
+  }): Promise<string[]> {
     try {
       const contactDb = new ContactDb(this.db)
       const contacts = await contactDb.getContactList({ type, offset, limit })
@@ -1173,7 +1225,11 @@ export class Dchat implements ChatProtocol {
         throw e
       }
     }
-    const localContact = await ContactService.getOrCreateContact({ db: this.db, address: this.client.addr, type: ContactType.ME })
+    const localContact = await ContactService.getOrCreateContact({
+      db: this.db,
+      address: this.client.addr,
+      type: ContactType.ME
+    })
     if (address === this.client.addr) {
       return localContact
     }
@@ -1203,7 +1259,8 @@ export class Dchat implements ChatProtocol {
     if (!record) return false
 
     const blockHeight = await this.getBlockHeight()
-    const shouldSubscribeByExpire = record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
+    const shouldSubscribeByExpire =
+      record.expire_height && blockHeight + blockHeightTopicWarnBlockExpire >= record.expire_height
 
     return shouldSubscribeByExpire && record.joined === 1
   }
@@ -1279,4 +1336,36 @@ export class Dchat implements ChatProtocol {
   async deleteCache(id: string): Promise<void> {
     return await CacheService.deleteCache({ db: this.db, id })
   }
+
+  async receivePieceMessage(message: MessageSchema) {
+    // TODO: Implement piece message handling
+    // try {
+    //   // Get piece information
+    //   const index = message.payload.options?.piece_index
+    //   const total = message.payload.options?.piece_total
+    //   const parity = message.payload.options?.piece_parity
+    //   const parentType = message.payload.options?.piece_parent_type
+    //   const bytesLength = message.payload.options?.piece_bytes_length
+    //
+    //   if (index === undefined || total === undefined || parity === undefined) {
+    //     logger.error('Invalid piece message options:', message.payload.options)
+    //     return
+    //   }
+    //
+    //   // save message to database
+    //   await this.saveMessage(message)
+    //
+    //   // Query all pieces
+    //   const messageDb = new MessageDb(this.db)
+    //   const pieces = await messageDb.queryByPayloadIdAndPayloadType(
+    //     message.payload.id,
+    //     MessageContentType.piece
+    //   )
+    //
+    //
+    // } catch (e) {
+    //   logger.error('Failed to process piece message:', e)
+    // }
+  }
+
 }
