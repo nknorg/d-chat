@@ -1,6 +1,5 @@
 import { ServiceType } from '@/common/service'
 import { bytesToHex, ContactSchema, logger, MessageContentType, MessageSchema, SessionType } from '@d-chat/core'
-import { Message } from 'nkn-sdk'
 import { ChromeStorage } from '../chromeStorage'
 import { services } from './services'
 
@@ -69,6 +68,7 @@ export class NotificationManager {
       case MessageContentType.text:
         messageContent = message.payload.content
         break
+      case MessageContentType.media:
       case MessageContentType.image:
         messageContent = '🖼'
         break
@@ -118,7 +118,7 @@ export class NotificationManager {
     }
   }
 
-  public async handleNewMessage(raw: Message) {
+  public async handleNewMessage(msg: MessageSchema) {
     // Check if notification is enabled
     const enableNotification = await this.getEnableNotification()
     if (!enableNotification) {
@@ -126,7 +126,7 @@ export class NotificationManager {
     }
 
     // Check if the message is from a contact
-    const message = await this.getMessageByMessageId(raw.messageId)
+    const message = await this.getMessageByMessageId(msg.messageId)
     if (!message) {
       return
     }
@@ -134,6 +134,15 @@ export class NotificationManager {
     // Get contact info
     const contactInfo = await this.getContactInfo(message.sender)
     if (!contactInfo) {
+      return
+    }
+
+    // Check message type
+    if (
+      ![MessageContentType.text, MessageContentType.media, MessageContentType.image, MessageContentType.audio].includes(
+        message.payload.contentType
+      )
+    ) {
       return
     }
 

@@ -12,6 +12,8 @@ const connectEventEmitter = new ConnectEventEmitter()
 ConnectEvent.onConnect = (_id: string, ...args: any[]) => {
   services[ServiceType.dchat].init()
   services[ServiceType.dchat].addMessage = (message: MessageSchema) => {
+    // notification
+    NotificationManager.getInstance().handleNewMessage(message)
     dchatEventEmitter.emit('addMessage', message)
   }
   services[ServiceType.dchat].updateMessage = (message: MessageSchema) => {
@@ -27,8 +29,7 @@ ConnectEvent.onMessage = (_id: string, ...args: any[]) => {
   connectEventEmitter.emit('onMessage', _id, ...args)
   const [message] = args
   services[ServiceType.dchat].handleMessage(message).then(() => {
-    // notification
-    NotificationManager.getInstance().handleNewMessage(message)
+
   })
 }
 

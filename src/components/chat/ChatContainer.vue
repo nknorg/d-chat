@@ -1,19 +1,11 @@
 <template>
   <v-layout v-if="props.targetId" class="fill-height justify-start align-start flex-column">
-    <v-container ref="messageContainer" class="fill-height justify-start align-start flex-column-reverse flex-grow-0 overflow-y-auto message-container">
+    <v-container ref="messageContainer"
+      class="fill-height justify-start align-start flex-column-reverse flex-grow-0 overflow-y-auto message-container">
       <MessageItem v-for="msg in messageStore.messageList" :key="msg.payload.id" :message="msg" class="mb-2 mt-2" />
     </v-container>
-    <v-fab
-      class="scroll-to-bottom-btn"
-      color="purple"
-      :active="state.showScrollToBottom"
-      icon="mdi-chevron-down"
-      variant="tonal"
-      absolute
-      size="small"
-      location="bottom right"
-      @click="scrollToBottom"
-    ></v-fab>
+    <v-fab class="scroll-to-bottom-btn" color="purple" :active="state.showScrollToBottom" icon="mdi-chevron-down"
+      variant="tonal" absolute size="small" location="bottom right" @click="scrollToBottom"></v-fab>
     <v-container class="d-flex flex-grow-0">
       <template v-if="chatStore.currentTargetType === SessionType.TOPIC && !isSubscribed">
         <v-container class="d-flex justify-center align-center">
@@ -43,13 +35,15 @@
             </v-menu>
           </v-btn>
         </div>
-        <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6" auto-grow hide-details @keydown="handleKeydown">
+        <v-textarea v-model="state.message" autofocus bg-color="grey-lighten-2" color="cyan" rows="1" max-rows="6"
+          auto-grow hide-details @keydown="handleKeydown">
           <template #prepend-inner>
             <AudioRecorder @recorded="handleAudioRecorded" @recording-started="clearAudioPreview" />
             <v-chip v-if="state.audioPreview.blob" label>
               <div class="audio-message">
                 <div class="audio-player">
-                  <v-btn icon density="compact" size="small" :color="state.audioPreview.isPlaying ? 'red' : 'purple'" class="play-button" @click="toggleAudioPreview">
+                  <v-btn icon density="compact" size="small" :color="state.audioPreview.isPlaying ? 'red' : 'purple'"
+                    class="play-button" @click="toggleAudioPreview">
                     <v-icon>{{ state.audioPreview.isPlaying ? 'mdi-stop' : 'mdi-play' }}</v-icon>
                   </v-btn>
                   <span class="ml-2">{{ formatDuration(state.audioPreview.duration) }}</span>
@@ -74,7 +68,7 @@
 import { useChatStore } from '@/stores/chat'
 import { useContactStore } from '@/stores/contact'
 import { useMessageStore } from '@/stores/message'
-import { FileType, IMessageSchema, MediaOptions, SessionType } from '@d-chat/core'
+import { FileType, IMessageSchema, logger, MediaOptions, SessionType } from '@d-chat/core'
 import { ComponentPublicInstance, defineProps, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import SvgIcon from '../SvgIcon.vue'
 import MessageItem from './MessageItem.vue'
@@ -217,6 +211,32 @@ async function send() {
   }
 }
 
+async function sendImage() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+
+    try {
+      const reader = new FileReader()
+      reader.onload = async (event) => {
+        const base64Data = event.target?.result as string
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpeg'
+
+        await chatStore.sendImage(props.targetType ?? SessionType.CONTACT, props.targetId, base64Data)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      logger.error('Failed to read image:', error)
+    }
+  }
+
+  input.click()
+}
+
 async function sendAudio(data: Blob, options: MediaOptions) {
   if (!props.targetId || !props.targetType) return
 
@@ -307,12 +327,6 @@ function handleKeydown(e) {
       send()
     }
   }
-}
-
-async function sendImage() {
-  // const filePath = await dialogStore.openFile()
-  // if (filePath == null) return
-  // await chatStore.sendImage(props.type, props.targetId, filePath)
 }
 
 async function loadMoreMessages() {

@@ -38,13 +38,19 @@ marked.setOptions({
   renderer: renderer
 })
 
-
 // Extract image URL from content
 const imageUrl = computed(() => {
   const content = props.message.payload.content || ''
-  // Simple regex to find image URL in markdown or plain text
-  const match = content.match(/!?\[.*?\]\((.*?)\)|(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp))/i)
-  return match ? (match[1] || match[2]) : null
+  // Match both markdown image format and base64 data URL
+  const markdownMatch = content.match(/!?\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/)
+  if (markdownMatch) {
+    return markdownMatch[1]
+  }
+  // If content is already a base64 string
+  if (content.startsWith('data:image/')) {
+    return content
+  }
+  return null
 })
 </script>
 

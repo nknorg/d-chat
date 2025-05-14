@@ -38,7 +38,6 @@ export class MessageSchema implements IMessageSchema {
   public deletedAt?: number
   public isDelete: boolean = false
   public payload: PayloadSchema
-  public options?: Record<string, any>
 
   constructor(schema: IMessageSchema) {
     this.messageId = schema.messageId

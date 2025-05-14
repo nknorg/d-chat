@@ -81,9 +81,8 @@ export const useNotificationStore = defineStore(STORE_NAME, {
       if (!enableNotification) {
         return
       }
-
       // Check message type
-      if (![MessageContentType.text, MessageContentType.image, MessageContentType.audio].includes(message.payload.contentType)) {
+      if (![MessageContentType.text, MessageContentType.media, MessageContentType.image, MessageContentType.audio].includes(message.payload.contentType)) {
         return
       }
 

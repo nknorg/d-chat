@@ -54,9 +54,7 @@ export const useChatStore = defineStore(STORE_NAME, {
       await application.service.call(ServiceType.dchat, 'sendAudio', type, to, data, options)
     },
     async sendImage(type: SessionType, to: string, path: string) {
-      // let message = await window.ipc.invoke(CHANNEL, INSTANCE, 'sendImage', type, to, path)
-      // const messageStore = useMessageStore()
-      // messageStore.messageList.unshift(message)
+      await application.service.call(ServiceType.dchat, 'sendImage', type, to, path)
     },
     async syncTopicSubscribers(topic: string) {
       await application.service.call(ServiceType.dchat, 'syncTopicSubscribers', topic)

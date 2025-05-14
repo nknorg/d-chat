@@ -28,6 +28,8 @@ export interface MessageDbModel {
 export interface IMessageDb {
   insert(model: MessageDbModel): Promise<void>
 
+  insertDeduplicationWithLock(model: MessageDbModel): Promise<boolean>
+
   update(model: MessageDbModel): Promise<void>
 
   queryByMessageId(messageId: string): Promise<MessageDbModel | undefined>
@@ -87,6 +89,30 @@ export class MessageDb implements IMessageDb {
       await this.db.table(MessageDb.tableName).add(model)
     } catch (e) {
       logger.error(e)
+      throw e
+    }
+  }
+
+  async insertDeduplicationWithLock(model: MessageDbModel): Promise<boolean> {
+    try {
+      return await this.db.transaction('rw', MessageDb.tableName, async () => {
+        // Check if non-deleted message with same payload_id exists
+        const existingMessage = await this.db
+          .table(MessageDb.tableName)
+          .where(['payload_id', 'is_delete'])
+          .equals([model.payload_id, 0])
+          .first()
+        
+        if (existingMessage) {
+          return false
+        }
+        
+        // Insert new message
+        await this.db.table(MessageDb.tableName).add(model)
+        return true
+      })
+    } catch (e) {
+      logger.error('Failed to insert message with lock:', e)
       throw e
     }
   }
@@ -158,9 +184,9 @@ export class MessageDb implements IMessageDb {
       offset?: number
       limit?: number
     } = {
-      offset: 0,
-      limit: 50
-    }
+        offset: 0,
+        limit: 50
+      }
   ): Promise<MessageDbModel[]> {
     const query = this.db
       .table(MessageDb.tableName)

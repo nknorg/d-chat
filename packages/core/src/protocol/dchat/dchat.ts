@@ -4,7 +4,7 @@ import { CacheSchema } from '../../schema/cache'
 import { ContactSchema, IContactSchema } from '../../schema/contact'
 import { ContactType } from '../../schema/contactEnum'
 import { MessageSchema } from '../../schema/message'
-import { MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
+import { FileType, MessageContentType, MessageStatus, PayloadType } from '../../schema/messageEnum'
 import { IPayloadSchema, MediaOptions, PayloadSchema } from '../../schema/payload'
 import { SessionSchema } from '../../schema/session'
 import { SessionType } from '../../schema/sessionEnum'
@@ -20,11 +20,12 @@ import { MessageDb } from '../database/message'
 import { SessionDb } from '../database/session'
 import { SubscriberDb } from '../database/subscriber'
 import { TopicDb } from '../database/topic'
+import { NknError } from '../error/nknError'
 import { CacheService } from './cacheService'
 import { ContactService } from './contactService'
 import { MessageService, sendOptions } from './messageService'
+import { ReedSolomonService } from './reedSolomonService'
 import { blockHeightTopicSubscribeDefault, blockHeightTopicWarnBlockExpire, SubscribeService } from './subscribeService'
-import { NknError } from '../error/nknError'
 
 export class Dchat implements ChatProtocol {
   private client: MultiClient
@@ -60,7 +61,19 @@ export class Dchat implements ChatProtocol {
   }
 
   async receiveImage(message: MessageSchema) {
-    // TODO: receive image
+    const fileExt = message.payload.options?.fileExt
+    const fileType = message.payload.options?.fileType
+    if (fileType == FileType.IMAGE) {
+      const base64Data = message.payload.content
+      const markdownImage = `![](data:image/${fileExt};base64,${base64Data})`
+      message.payload.content = markdownImage
+
+      const record = await this.saveMessage(message, true)
+      if (record != null) {
+        this._addMessage?.(record)
+        await this.handleSession(record)
+      }
+    }
   }
 
   async receiveFile(message: MessageSchema) {
@@ -331,9 +344,9 @@ export class Dchat implements ChatProtocol {
             await this.receiveReadMessage(data['readIds'])
             return
           // TODO
-          // case MessageContentType.piece:
-          //   await this.receivePieceMessage(message)
-          //   return
+          case MessageContentType.piece:
+            await this.receivePieceMessage(message)
+            return
           case MessageContentType.text:
           case MessageContentType.media:
           case MessageContentType.image:
@@ -498,7 +511,7 @@ export class Dchat implements ChatProtocol {
     return this._updateSession
   }
 
-  async saveMessage(message: MessageSchema): Promise<MessageSchema | null> {
+  async saveMessage(message: MessageSchema, deduplication: boolean = false): Promise<MessageSchema | null> {
     if (!this.db) return message
     try {
       const messageDb = new MessageDb(this.db)
@@ -506,7 +519,14 @@ export class Dchat implements ChatProtocol {
       if (messRecord) {
         return null
       }
-      await messageDb.insert(message.toDbModel())
+      if (deduplication) {
+        const result = await messageDb.insertDeduplicationWithLock(message.toDbModel())
+        if (!result) {
+          return null
+        }
+      } else {
+        await messageDb.insert(message.toDbModel())
+      }
       return message
     } catch (e) {
       logger.error(e)
@@ -1338,34 +1358,97 @@ export class Dchat implements ChatProtocol {
   }
 
   async receivePieceMessage(message: MessageSchema) {
-    // TODO: Implement piece message handling
-    // try {
-    //   // Get piece information
-    //   const index = message.payload.options?.piece_index
-    //   const total = message.payload.options?.piece_total
-    //   const parity = message.payload.options?.piece_parity
-    //   const parentType = message.payload.options?.piece_parent_type
-    //   const bytesLength = message.payload.options?.piece_bytes_length
-    //
-    //   if (index === undefined || total === undefined || parity === undefined) {
-    //     logger.error('Invalid piece message options:', message.payload.options)
-    //     return
-    //   }
-    //
-    //   // save message to database
-    //   await this.saveMessage(message)
-    //
-    //   // Query all pieces
-    //   const messageDb = new MessageDb(this.db)
-    //   const pieces = await messageDb.queryByPayloadIdAndPayloadType(
-    //     message.payload.id,
-    //     MessageContentType.piece
-    //   )
-    //
-    //
-    // } catch (e) {
-    //   logger.error('Failed to process piece message:', e)
-    // }
-  }
+    try {
+      // Get piece information
+      const index = message.payload.options?.piece_index
+      const total = message.payload.options?.piece_total
+      const parity = message.payload.options?.piece_parity
+      const parentType = message.payload.options?.piece_parent_type
+      const bytesLength = message.payload.options?.piece_bytes_length
 
+      if (index === undefined || total === undefined || parity === undefined) {
+        logger.error('Invalid piece message options:', message.payload.options)
+        return
+      }
+
+      // save message to database
+      await this.saveMessage(message)
+      // Query all pieces
+      const messageDb = new MessageDb(this.db)
+      const pieces = await messageDb.queryByPayloadIdAndPayloadType(message.payload.id, MessageContentType.piece)
+
+      // If we have enough pieces, decode them
+      if (pieces.length >= total) {
+        const messageDb = new MessageDb(this.db)
+        const record = await messageDb.queryByPayloadIdAndPayloadType(
+          message.payload.id,
+          MessageContentType[parentType]
+        )
+        if (record && record.length > 0) {
+          return
+        }
+
+        // Sort pieces by index
+        pieces.sort((a, b) => {
+          const aOptions = JSON.parse(a.payload_options || '{}')
+          const bOptions = JSON.parse(b.payload_options || '{}')
+          return (aOptions.piece_index || 0) - (bOptions.piece_index || 0)
+        })
+
+        const reedSolomon = new ReedSolomonService(total, parity)
+
+        // TODO: fix this
+        const hasAllDataShards = reedSolomon.hasAllDataShards(
+          pieces.map((piece) => {
+            const options = JSON.parse(piece.payload_options || '{}')
+            return options.piece_index
+          })
+        )
+        if (!hasAllDataShards) {
+          logger.error('Not enough pieces to decode message')
+          return
+        }
+
+        // Convert pieces to Uint8Array
+        const pieceData = pieces.map((piece) => {
+          // First decode base64, then handle UTF-8 encoding
+          const base64Decoded = Buffer.from(piece.payload_content, 'base64')
+          const decodedContent = new TextDecoder().decode(base64Decoded)
+          return decodedContent
+        })
+
+        // Combine pieces
+        const dataPieces = pieceData.slice(0, total)
+        const combinedData = dataPieces.join('')
+
+        // Create new message with combined data
+        const combinedMessage = new MessageSchema({
+          ...message,
+          messageId: MessageService.createMessageId(),
+          payload: new PayloadSchema({
+            ...message.payload,
+            contentType: MessageContentType[parentType],
+            content: combinedData,
+            options: {
+              ...message.payload.options
+            }
+          }),
+          status: MessageStatus.Sent
+        })
+
+        // Delete piece messages
+        for (const piece of pieces) {
+          await messageDb.update({
+            ...piece,
+            is_delete: 1,
+            deleted_at: Date.now()
+          })
+        }
+
+        await this.receiveImage(combinedMessage)
+      }
+    } catch (e) {
+      logger.error('Failed to receive piece message:', e)
+    }
+  }
 }

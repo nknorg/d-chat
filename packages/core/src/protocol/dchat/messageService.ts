@@ -62,7 +62,7 @@ export class MessageService {
   static createImagePayload(data: string, body?: MessageBody, options?: MediaOptions): IPayloadSchema {
     return this.fillPayloadFields(
       {
-        contentType: MessageContentType.image,
+        contentType: MessageContentType.media,
         content: `![image](${data})`
       },
       body,
@@ -145,4 +145,6 @@ export class MessageService {
       version: version
     }
   }
+
+
 }
