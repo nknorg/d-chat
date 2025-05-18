@@ -42,6 +42,7 @@ export class Dchat implements ChatProtocol {
   init() {
     this.client = Connect.getLastSignClient()
     this.db = StoreAdapter.db?.getLastOpenedDb()
+    logger.debug('init dchat', this.client, this.db)
   }
 
   setDeviceId(deviceId: string): void {
