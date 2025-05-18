@@ -26,11 +26,9 @@
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-refresh" @click="refresh">
         <v-tooltip activator="parent">{{ $t('refresh') }}</v-tooltip>
-        <NewWhisperDialog />
       </v-list-item>
       <v-list-item v-if="isExtension" prepend-icon="mdi-tab" @click="newTab">
         <v-tooltip activator="parent">{{ $t('new_tab') }}</v-tooltip>
-        <NewPublicGroupDialog />
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
