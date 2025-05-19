@@ -44,7 +44,7 @@ export default {
   // devtools_page: "src/devtools/index.html",
   options_page: 'web-extension/src/ui/options/index.html',
   offline_enabled: true,
-  host_permissions: ['<all_urls>'],
+  // host_permissions: ['<all_urls>'],
   permissions: ['storage', 'tabs', 'background', 'notifications', 'sidePanel'],
   // optional_permissions: ['notifications'],
   web_accessible_resources: [
