@@ -335,6 +335,11 @@ export class Dchat implements ChatProtocol {
           sessionType = SessionType.CONTACT
           await this.handleContact(message)
         }
+
+        if (message.isOutbound && this.client.addr === message.sender) {
+          return
+        }
+
         messageStatus = MessageStatus.Sent
 
         switch (payload.contentType) {

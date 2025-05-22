@@ -19,7 +19,7 @@
         <h4>{{ contactInfo?.displayName || ContactService.getNameByContact(contactInfo) }}</h4>
         <ContactProfile :activator="'parent'" :contact="contactInfo" />
       </v-layout>
-      <v-alert class="alert target-alert body-regular" color="primary" theme="dark" prominent>
+      <v-alert class="alert target-alert body-regular" color="grey-darken-3" theme="dark" prominent>
         <MessageContent :message="props.message" />
         <div v-if="state.translateExpanded">
           <v-row>
@@ -50,7 +50,7 @@
       </v-alert>
     </v-col>
   </v-row>
-  <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="green" theme="dark" prominent>
+  <v-alert v-else-if="props.message.isOutbound" class="alert self-alert body-regular" color="primary" theme="dark" prominent>
     <MessageContent :message="props.message" />
     <div class="footer">
       <v-label class="body-small">{{ formatChatTime(props.message.sentAt) }}</v-label>
@@ -61,7 +61,7 @@
           :icon="props.message.status & MessageStatus.Read ? 'material-symbols:check-circle-rounded' : 'material-symbols:check-circle-outline-rounded'"
         />
         <div v-if="props.message.status & MessageStatus.Receipt" class="check-icon-wrapper">
-          <v-avatar size="16" color="green">
+          <v-avatar size="16" color="primary">
             <Icon
               class="check-icon"
               :icon="props.message.status & MessageStatus.Read ? 'material-symbols:check-circle-rounded' : 'material-symbols:check-circle-outline-rounded'"

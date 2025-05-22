@@ -4,7 +4,7 @@
       class="fill-height justify-start align-start flex-column-reverse flex-grow-0 overflow-y-auto message-container">
       <MessageItem v-for="msg in messageStore.messageList" :key="msg.payload.id" :message="msg" class="mb-2 mt-2" />
     </v-container>
-    <v-fab class="scroll-to-bottom-btn" color="purple" :active="state.showScrollToBottom" icon="mdi-chevron-down"
+    <v-fab class="scroll-to-bottom-btn" color="" :active="state.showScrollToBottom" icon="mdi-chevron-down"
       variant="tonal" absolute size="small" location="bottom right" @click="scrollToBottom"></v-fab>
     <v-container class="d-flex flex-grow-0">
       <template v-if="chatStore.currentTargetType === SessionType.TOPIC && !isSubscribed">

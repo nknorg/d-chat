@@ -1,6 +1,6 @@
 <template>
   <div class="audio-recorder">
-    <v-btn icon variant="text" :color="isRecording ? 'error' : 'purple'" class="record-button" @click="toggleRecording">
+    <v-btn icon variant="text" :color="isRecording ? 'error' : 'primary'" class="record-button" @click="toggleRecording">
       <v-icon>{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
     </v-btn>
     <div v-if="isRecording" class="recording-info">

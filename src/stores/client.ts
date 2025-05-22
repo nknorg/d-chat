@@ -36,6 +36,10 @@ export const useClientStore = defineStore(STORE_NAME, {
     },
     async disconnect() {
       this.lastSignInId = await application.service.call(ServiceType.Connect, 'disconnect')
+      await application.service.call(ServiceType.Db, 'close', this.lastSignInId)
+      if (process.env.__APP_PLATFORM__ == 'webext') {
+        await Db.close(this.lastSignInId)
+      }
       this.lastSignInId = null
       this.connectStatus = ConnectionStatus.Disconnected
     },
