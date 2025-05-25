@@ -336,7 +336,17 @@ export class Dchat implements ChatProtocol {
           await this.handleContact(message)
         }
 
-        if (message.isOutbound && this.client.addr === message.sender) {
+        if (
+          message.isOutbound &&
+          this.client.addr === message.sender &&
+          (message.payload.contentType === MessageContentType.text ||
+            message.payload.contentType === MessageContentType.textExtension ||
+            message.payload.contentType === MessageContentType.media ||
+            message.payload.contentType === MessageContentType.image ||
+            message.payload.contentType === MessageContentType.video ||
+            message.payload.contentType === MessageContentType.audio ||
+            message.payload.contentType === MessageContentType.file)
+        ) {
           return
         }
 
@@ -368,12 +378,12 @@ export class Dchat implements ChatProtocol {
             await this.receiveTopicSubscribeMessage(raw.src, payload.topic).catch((e) => {
               logger.error('Failed to receive topic subscribe message:', e)
             })
-            return
+            break
           case MessageContentType.topicUnsubscribe:
             await this.receiveTopicUnsubscribeMessage(raw.src, payload.topic).catch((e) => {
               logger.error('Failed to receive topic unsubscribe message:', e)
             })
-            return
+            break
           case MessageContentType.contactProfile:
             if ('requestType' in data) {
               await this.receiveContactRequestMessage(
