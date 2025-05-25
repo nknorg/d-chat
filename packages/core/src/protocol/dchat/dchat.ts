@@ -1377,6 +1377,8 @@ export class Dchat implements ChatProtocol {
         return
       }
 
+      message.deletedAt = Date.now()
+      message.isDelete = true
       // save message to database
       await this.saveMessage(message)
       // Query all pieces
