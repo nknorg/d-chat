@@ -45,7 +45,7 @@ export default {
   options_page: 'web-extension/src/ui/options/index.html',
   offline_enabled: true,
   // host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'tabs', 'background', 'notifications', 'sidePanel'],
+  permissions: ['storage', 'tabs', 'background', 'notifications', 'sidePanel', 'alarms'],
   // optional_permissions: ['notifications'],
   web_accessible_resources: [
     {

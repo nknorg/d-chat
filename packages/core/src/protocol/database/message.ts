@@ -102,11 +102,11 @@ export class MessageDb implements IMessageDb {
           .where(['payload_id', 'is_delete'])
           .equals([model.payload_id, 0])
           .first()
-        
+
         if (existingMessage) {
           return false
         }
-        
+
         // Insert new message
         await this.db.table(MessageDb.tableName).add(model)
         return true
@@ -183,10 +183,7 @@ export class MessageDb implements IMessageDb {
     options: {
       offset?: number
       limit?: number
-    } = {
-        offset: 0,
-        limit: 50
-      }
+    } = { offset: 0, limit: 50 }
   ): Promise<MessageDbModel[]> {
     const query = this.db
       .table(MessageDb.tableName)
@@ -216,10 +213,7 @@ export class MessageDb implements IMessageDb {
 
   async queryByPayloadIds(payloadIds: string[]): Promise<MessageDbModel[]> {
     try {
-      return await this.db.table(MessageDb.tableName)
-        .where('payload_id')
-        .anyOf(payloadIds)
-        .toArray()
+      return await this.db.table(MessageDb.tableName).where('payload_id').anyOf(payloadIds).toArray()
     } catch (e) {
       logger.error(e)
       throw e
@@ -239,9 +233,14 @@ export class MessageDb implements IMessageDb {
     }
   }
 
-  async updateReceivedMessagesStatusByTargetId(targetId: string, targetType: SessionType, status: number): Promise<void> {
+  async updateReceivedMessagesStatusByTargetId(
+    targetId: string,
+    targetType: SessionType,
+    status: number
+  ): Promise<void> {
     try {
-      await this.db.table(MessageDb.tableName)
+      await this.db
+        .table(MessageDb.tableName)
         .where(['target_id', 'target_type', 'is_outbound'])
         .equals([targetId, targetType, 0])
         .modify((item) => {
@@ -284,7 +283,8 @@ export class MessageDb implements IMessageDb {
 
   async getUnreadMessageCount(): Promise<number> {
     try {
-      return await this.db.table(MessageDb.tableName)
+      return await this.db
+        .table(MessageDb.tableName)
         .where(['is_outbound', 'is_delete'])
         .equals([0, 0])
         .and((item) => item.status < MessageStatus.Read)
@@ -316,10 +316,10 @@ export class MessageDb implements IMessageDb {
   async batchUpdateStatusWithTransaction(messages: MessageDbModel[]): Promise<MessageDbModel[]> {
     try {
       return await this.db.transaction('rw', MessageDb.tableName, async () => {
-        const existingMessages = await this.queryByPayloadIds(messages.map(m => m.payload_id))
+        const existingMessages = await this.queryByPayloadIds(messages.map((m) => m.payload_id))
         if (existingMessages.length > 0) {
           for (const message of existingMessages) {
-            const updateMessage = messages.find(m => m.payload_id === message.payload_id)
+            const updateMessage = messages.find((m) => m.payload_id === message.payload_id)
             if (updateMessage) {
               message.status = message.status | updateMessage.status
             }

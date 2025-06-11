@@ -1,5 +1,5 @@
 import { ServiceType } from '@/common/service'
-import { logger, WalletHelper } from '@d-chat/core'
+import { logger, WalletHelper, ConnectionStatus } from '@d-chat/core'
 import type { WalletJson } from 'nkn-sdk'
 import { ChromeStorage } from '../chromeStorage'
 import { services } from './services'
@@ -42,6 +42,13 @@ export class AutoLoginManager {
 
   public async tryAutoLogin(): Promise<boolean> {
     try {
+      // Check current connection status
+      const currentStatus = services[ServiceType.Connect].getLastSignStatus()
+      if (currentStatus === ConnectionStatus.Connected) {
+        logger.debug('Already connected, skipping auto login')
+        return true
+      }
+
       const walletInfo = await this.getWalletInfo()
       if (!walletInfo) {
         return false
