@@ -1,5 +1,5 @@
 import { ServiceType } from '@/common/service'
-import { bytesToHex, ContactSchema, logger, MessageContentType, MessageSchema, SessionType } from '@d-chat/core'
+import { bytesToHex, ContactSchema, logger, MessageContentType, MessageSchema, SessionType, ContactType } from '@d-chat/core'
 import { ChromeStorage } from '../chromeStorage'
 import { services } from './services'
 
@@ -133,7 +133,7 @@ export class NotificationManager {
 
     // Get contact info
     const contactInfo = await this.getContactInfo(message.sender)
-    if (!contactInfo) {
+    if (!contactInfo || contactInfo.type == ContactType.ME) {
       return
     }
 
